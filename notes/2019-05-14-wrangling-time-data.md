@@ -157,9 +157,11 @@ for i, time in what_records(df.iloc[:1000000]):
 * I Should have checked earlier, but looking at the Discussion, one person left a [comment](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/discussion/76681#latest-458859) about this too.. 
 * They plotted time time variable for `crew=1, seat=0` , finding this, 
 <img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-05-14%20at%205.17.02%20PM.png" width="530" height="350">
-_(Source: [discussion thread](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/discussion/76681#latest-458859))_ 
+_Source_: [discussion thread](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/discussion/76681#latest-458859)
+
 * Okay so this is for one person, and it looks like indeed the data is just unsorted
 * so if I can quickly look for any duplicates for all the people, then a sort should do the trick!
+
 ```python
 def calc_duplicates(df):
     duplicates = []
@@ -174,6 +176,7 @@ def calc_duplicates(df):
     return pd.DataFrame.from_records(duplicates)
 ```
 * Okay so good news is indeed no duplicates are visible. 
+
 ```python
 %time dupesdf = calc_duplicates(df)
 # Wall time: 28.5 s
@@ -198,8 +201,6 @@ Name: bumps, dtype: int64
 ```
 * Le yay.
 
-#### experiments sorted?
-* ok well after messing around with this 
 
 #### Reading LSTM article
 * ([this](https://colah.github.io/posts/2015-08-Understanding-LSTMs/) one)
