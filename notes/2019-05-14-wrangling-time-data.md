@@ -83,6 +83,9 @@ for crew, seat, experiment in itertools.product(*choices):
 
 #### Ok something periodic happening in this data I dont know yet..
 ```python
+def what_records(dfx):
+    return [(int(x), y) for (x,y) in json.loads(dfx['time'].to_json(orient='columns')).items()]
+    
 def calc_bumps(df):
     lasttime = 0
     bumps = []
@@ -198,7 +201,7 @@ bumpsdf.bumps.value_counts()
 0    48
 Name: bumps, dtype: int64
 
-
+df.to_csv('data/sorted_train.csv', index=False)
 ```
 * Le yay.
 
