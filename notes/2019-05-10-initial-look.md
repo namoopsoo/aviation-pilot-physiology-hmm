@@ -1,6 +1,11 @@
+#### Quick disclaimer
+I'm looking at  [this kaggle competition which Completed in 2019-February](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/data) , to see what I come up with. _(According to the Kaggle competitrion rules, I understand that publicly 
+sharing code/data during a "live" competition can only be done if also sharing within the public forum. This particular 
+competition has been over for a few months so once I'm done here, I will just aim to post a link to my repo in the 
+discussion forums later on. But there is no sense of urgency as I see it.)_
 
 #### The data, initial notes
-The data from [kaggle](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/data) is `256Hz` sampled physiological data 
+The data  is `256Hz` sampled physiological data 
 from `18` pilots, but split into `9` crews. If I understand the concept properly, the training and test data sets are from two
 completely different scenarios and the intent is to try and predict another third even less related scenario! Wow.
 The training data I understand was collected neither in a plane nor in a flight simulator, while pilots were subjected to distractions
