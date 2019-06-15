@@ -71,8 +71,61 @@ model = tf.keras.Sequential([
 ])
 ```
 
+#### Okay, next I tried to run the eager style manual train loop,...
+* Using the `model` above ^^ ... 
+* Make some data using the tensor flow variables. Actually I didn't do this before. I did not write it down,
+but when I was trying this [explanation of a manual train loop](https://www.tensorflow.org/guide/eager#train_a_model) , I was getting errors that using vanilla numpy data was throwing an error.
+```python
+outdata['x_train'].shape
+# ==> (446110, 256, 1)
 
-### side notes.. 
+
+trainsmall = tf.convert_to_tensor(outdata['x_train'][:100, :, :],  dtype=tf.float32)
+labelsmall = tf.convert_to_tensor(outdata['y_train'][:100, :])
+dataset = tf.data.Dataset.from_tensor_slices(
+(trainsmall, labelsmall))
+
+dataset
+# =>
+<DatasetV1Adapter shapes: ((256, 1), (4,)), types: (tf.float32, tf.float32)>
+
+dataset_batches = dataset.batch(2)
+
+```
+```python
+for images,labels in dataset.take(1):
+    print("Logits: ", model(trainsmall[:1]).numpy())
+    
+# ==>
+Logits:  [[-0.0121733  -0.0003184   0.13217376 -0.1131559 ]]
+```
+```python
+optimizer = tf.train.AdamOptimizer()
+
+loss_history = []
+
+for (batch, (invec, labels)) in enumerate(dataset_batches.take(100)):
+
+    with tf.GradientTape() as tape:
+        logits = model(invec, training=True)
+        loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+
+    loss_history.append(loss_value.numpy())
+    grads = tape.gradient(loss_value, model.trainable_variables)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables),
+                            global_step=tf.train.get_or_create_global_step())
+
+
+# ==>
+InvalidArgumentError                      Traceback (most recent call last)
+InvalidArgumentError: Can not squeeze dim[1], expected a dimension of 1, got 4 [Op:Squeeze]
+
+```
+* Okay darn, so based on the `InvalidArgumentError` , looks to me like this shape difference is causing me a problem.
+I thought it was okay to use `tf.keras.layers.Dense(4)` as the second layer to observe a _per-class_ output. 
+* I'm not sure why ` tf.losses.sparse_softmax_cross_entropy` wants this shape.
+
+### Side notes.. 
 
 #### try to make the output data pure numpy array not an array of arrays!
 ```python
