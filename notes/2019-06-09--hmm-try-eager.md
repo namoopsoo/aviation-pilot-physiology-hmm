@@ -73,8 +73,9 @@ model = tf.keras.Sequential([
 
 #### Okay, next I tried to run the eager style manual train loop,...
 * Using the `model` above ^^ ... 
-* Make some data using the tensor flow variables. Actually I didn't do this before. I did not write it down,
-but when I was trying this [explanation of a manual train loop](https://www.tensorflow.org/guide/eager#train_a_model) , I was getting errors that using vanilla numpy data was throwing an error.
+* Make some data using the tensor flow variables. Actually I didn't do this before when using the **Non-Eager training** . 
+When I was trying this [explanation of a manual train loop](https://www.tensorflow.org/guide/eager#train_a_model) , with vanilla numpy arrays,  I was getting the error, `ValueError: Failed to convert numpy ndarray to a Tensor (Unable to get element as bytes.).`
+* So instead...
 ```python
 outdata['x_train'].shape
 # ==> (446110, 256, 1)
