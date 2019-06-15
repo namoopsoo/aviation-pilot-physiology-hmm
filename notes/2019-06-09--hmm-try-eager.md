@@ -126,6 +126,59 @@ InvalidArgumentError: Can not squeeze dim[1], expected a dimension of 1, got 4 [
 I thought it was okay to use `tf.keras.layers.Dense(4)` as the second layer to observe a _per-class_ output. 
 * I'm not sure why ` tf.losses.sparse_softmax_cross_entropy` wants this shape.
 
+#### Oh wow, indeed the labels are supposed to be indices
+* okay looked at [this](https://stackoverflow.com/questions/49083984/valueerror-can-not-squeeze-dim1-expected-a-dimension-of-1-got-3-for-sparse) very helpful explanation. The documentation for ` tf.losses.sparse_softmax_cross_entropy` was  actually was not super duper straight forward.
+* So now... I built a mini dataset using `10,000` examples, batching `2` at a time.
+* Quick side note on batches: no matter the shape of the `labels`, `logits` passed into ` tf.losses.sparse_softmax_cross_entropy`, the output is just a scalar. So I actually do not yet see what the ideal batch size is.
+```python
+trainsmall = tf.convert_to_tensor(outdata['x_train'][:10000, :, :],  dtype=tf.float32)
+
+# Build single column labels instead, 
+labelsmall = tf.convert_to_tensor(np.argmax(outdata['y_train'][:10000, :], axis=1))
+
+dataset = tf.data.Dataset.from_tensor_slices(
+(trainsmall, labelsmall))
+
+dataset_batches = dataset.batch(2)
+```
+* And I'm not expecting any miracles here since the training data is not representative at all..
+```python
+print(Counter(np.argmax(outdata['y_train'][:, :], axis=1)))
+print(Counter(np.argmax(outdata['y_train'][:10000, :], axis=1)))
+
+# ==> 
+Counter({0: 234352, 2: 180851, 3: 23218, 1: 7689})
+Counter({2: 8543, 0: 1457})
+```
+* Anyhow I just want to see this run without producing errors...
+```python
+optimizer = tf.train.AdamOptimizer()
+
+loss_history = []
+
+for (batch, (invec, labels)) in enumerate(dataset_batches.take(100)):
+
+    with tf.GradientTape() as tape:
+        logits = model(invec, training=True)
+        loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+
+    loss_history.append(loss_value.numpy())
+    grads = tape.gradient(loss_value, model.trainable_variables)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables),
+                            global_step=tf.train.get_or_create_global_step())
+
+```
+* After trying that again... it took about `5-10 minutes` 
+```python
+plt.plot(loss_history)
+plt.xlabel('Batch #')
+plt.ylabel('Loss [entropy]')
+```
+* => 
+
+<img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-15%20at%201.55.52%20PM.png" width="608" height="409">
+
+
 ### Side notes.. 
 
 #### try to make the output data pure numpy array not an array of arrays!
