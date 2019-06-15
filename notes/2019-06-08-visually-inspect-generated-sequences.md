@@ -1,6 +1,7 @@
 
 #### Took a detour to plot the sequences I'm currently building, as a sanity check...
 * I had saved my `"outdata"` earlier as `"models/2019-05-19T001217-UTC-outdata.pkl"`, 
+* And as seen in this `metadata` below, I had only built sequences using one variable, `'r'` which is a _Respiration_ amplitude value.
 ```python
 import pickle
 import matplotlib.pyplot as plt
@@ -107,3 +108,17 @@ for i,j in itertools.product(range(4), range(4)):
 
 <img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-15%20at%2011.29.22%20AM.png"
 width="607" height="383">
+
+```
+# I dont know if there is enough in here to visually discern
+# What does a respiration look like for each category, 
+# I guess it would really come down to the slope.
+# 
+# So above, I do see that the last row's slope "Diverted Attention" does happen to look
+#   steeper than the first row's slope "Baseline"
+# 
+# In any case, I think this visual inspection is enough to tell me at least on a high level there is some interesting signal in even
+#  just this one variable r.
+# 
+# But indeed the classes are not balanced and I still think that is the next challenge to deal with.
+```
