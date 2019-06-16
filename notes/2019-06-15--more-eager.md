@@ -40,3 +40,23 @@ model = tf.keras.Sequential([
 CPU times: user 1min 51s, sys: 8.48 s, total: 1min 59s
 Wall time: 2min 2s
 ```
+
+#### Evaluation
+```python
+
+test_subset = np.random.choice(np.arange(0, outdata['x_test'].shape[0], 1), 100000, replace=False)
+expected_onehot = tf.convert_to_tensor(outdata['y_test'][test_subset])
+ 
+%time preds = model(tf.convert_to_tensor(outdata['x_test'][test_subset], dtype=tf.float32))
+
+print(Counter(np.argmax(preds, axis=1)))
+expected = tf.convert_to_tensor(np.argmax(outdata['y_test'][test_subset], axis=1))
+
+tf.confusion_matrix( 
+    expected,# labels
+    np.argmax(preds, axis=1), # predictions
+    num_classes=4
+)
+
+
+```
