@@ -21,3 +21,22 @@ CPU times: user 30.9 ms, sys: 8.18 ms, total: 39.1 ms
 Wall time: 53 ms
 <DatasetV1Adapter shapes: ((?, 256, 1), (?,), (?,)), types: (tf.float32, tf.int64, tf.float64)>
 ```
+
+#### Still using this model from yesterday
+```python
+model = tf.keras.Sequential([
+    tf.keras.layers.LSTM(64,  dropout=0.2, recurrent_dropout=0.2,
+                input_shape=(None, 1)
+              ),
+    # 4 because 'A', 'B', 'C', 'D'.
+    tf.keras.layers.Dense(4)
+])
+```
+* And took about `2min` with those `4000` inputs.
+```python
+%time loss_history = do_train(model, dataset_batches)
+
+# =>
+CPU times: user 1min 51s, sys: 8.48 s, total: 1min 59s
+Wall time: 2min 2s
+```
