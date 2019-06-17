@@ -1,4 +1,4 @@
-_Draft.. still need to copy from notebook..._
+
 
 #### Okay next I tried stratifying a bit
 * Took `1000` from each class, to get uniform representation, 
@@ -131,13 +131,12 @@ array([[ 82, 213, 291,   0],
 # before. Even though many mistakes heh. An interesting result nonetheless.
 ```
 
-#### ok actually use non equal weights vector this time...
+#### Ok, actually use non equal weights vector this time...
 ```python
 # 2019-06-16 00:58UTC 
 # 
 # try higher weights on classes now ...  
 # .. Counter({0: 234352, 1: 7689, 2: 180851, 3: 23218, })
-
 
 
 def build_dataset_weighty(arrays, target_indices, class_weights):
@@ -162,8 +161,112 @@ def build_dataset_weighty(arrays, target_indices, class_weights):
     dataset_batches = dataset.batch(100)
     return dataset_batches
 ```
+```python
+class_weights = {0: 0.1, 1: 0.5, 2: 0.1, 3: 0.3}
+%time dataset_batches = build_dataset_weighty(outdata, target_indices, class_weights)
+# =>
+0.999999999999947
+CPU times: user 33 ms, sys: 27.7 ms, total: 60.7 ms
+Wall time: 150 ms
+```
+* Same model..
+```python
+model = tf.keras.Sequential([
+    tf.keras.layers.LSTM(64,  dropout=0.2, recurrent_dropout=0.2,
+                input_shape=(None, 1)
+              ),
+    # 4 because 'A', 'B', 'C', 'D'.
+    tf.keras.layers.Dense(4)
+])
+```
+```python
+%time loss_history = do_train(model, dataset_batches)
+# 
+CPU times: user 1min 44s, sys: 7.29 s, total: 1min 52s
+Wall time: 1min 53s
 
+```
+```python
+plt.plot(loss_history)
+plt.xlabel('Batch #')
+plt.ylabel('Loss [entropy]')
+```
 
+<img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-17%20at%209.27.30%20AM.png" width="616" height="392>
+
+```python
+# oh my looks quite different indeed now. Following the unevenness of the weights i think
+# Going to stick to the same random sampled test subset ...
+%time preds = model(tf.convert_to_tensor(outdata['x_test'][test_subset], dtype=tf.float32))
+
+print(Counter(np.argmax(preds, axis=1)))
+
+# =>
+CPU times: user 2.08 s, sys: 577 ms, total: 2.66 s
+Wall time: 1.84 s
+Counter({3: 502, 1: 498})
+```
+```python
+tf.confusion_matrix( 
+    expected,# labels
+    np.argmax(preds, axis=1), # predictions
+    num_classes=4
+)
+
+# =>
+<tf.Tensor: id=15384435, shape=(4, 4), dtype=int32, numpy=
+array([[  0, 295,   0, 291],
+       [  0,  15,   0,  12],
+       [  0, 165,   0, 178],
+       [  0,  23,   0,  21]], dtype=int32)>
+```
+```python
+import mytf.utils as mu
+micro, macro, weighted, f1 = mu.tf_f1_score(expected_onehot, preds)
+# from importlib import reload
+# reload(mu)
+
+micro, macro, weighted, f1, tf.reduce_mean(f1)
+# =>
+
+(<tf.Tensor: id=15384348, shape=(), dtype=float64, numpy=0.3333333333333333>,
+ <tf.Tensor: id=15384385, shape=(), dtype=float64, numpy=0.2696476956965507>,
+ <tf.Tensor: id=15384393, shape=(), dtype=float64, numpy=0.4607046086068987>,
+ <tf.Tensor: id=15384383, shape=(4,), dtype=float64, numpy=array([0.53959484, 0.0512334 , 0.40688019, 0.08088235])>,
+ <tf.Tensor: id=15384399, shape=(), dtype=float64, numpy=0.2696476956965507>)
+```
+```python
+# Oh wow. that took things in the complete opposite direction! 
+# I have a feeling that since i both 
+# (a) stratified the input data 
+# (b) and applied weights, i basically overcompensated  and now only the minority classes
+#have been predicted. !!
+# 
+# But also even though high favoritism was given to the minority classes, there were still
+# an overwhelming amount of mistakes as seen by the f1 scores for them, 
+# , 0.0512334 and 0.08088235 
+# So either there is not enough information in the r predictor or also perhaps there is not 
+# enough data.
+```
+```python
+Counter(np.argmax(outdata['y_train'], axis=1))
+# 
+Counter({0: 234352, 2: 180851, 3: 23218, 1: 7689})
+
+```
+
+#### Next one , 
+* _Sticking to a new notebook this time..._ [here](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-16--today.md.ipynb)
+```python
+# 2019-06-16 21:33 UTC 
+# try again now but 
+# - use more than just 4000 training rows
+# - Don't stratify the data, just apply a weights vector when training.
+# - proportionally larger batches.
+
+# There are Counter({0: 234352, 1: 7689, 2: 180851, 3: 23218, }) class counts
+#    in my train data... use more of that ...
+```
 
 #### At one point I did this... 
 ```python
