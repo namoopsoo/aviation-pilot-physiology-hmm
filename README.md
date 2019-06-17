@@ -9,3 +9,7 @@ A look at this physiological data kaggle from [earlier this year](https://www.ka
 - [More](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-17--what%3F.md)
 - [The losses](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-18.md)
 - [Visual inspection detour](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-08-visually-inspect-generated-sequences.md)
+- [Trying with eager execution next](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-09--hmm-try-eager.md)
+- [Changing up the weights](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-15--more-eager.md)
+- [More data, less stratifying](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-16--today.md.ipynb)
+
