@@ -192,7 +192,7 @@ plt.xlabel('Batch #')
 plt.ylabel('Loss [entropy]')
 ```
 
-<img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-17%20at%209.27.30%20AM.png" width="616" height="392>
+<img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-17%20at%209.27.30%20AM.png" width="616" height="392">
 
 ```python
 # oh my looks quite different indeed now. Following the unevenness of the weights i think
