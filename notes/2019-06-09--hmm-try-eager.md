@@ -179,6 +179,7 @@ plt.ylabel('Loss [entropy]')
 <img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-15%20at%201.55.52%20PM.png" width="608" height="409">
 
 
+
 ### Side notes.. 
 
 #### try to make the output data pure numpy array not an array of arrays!
