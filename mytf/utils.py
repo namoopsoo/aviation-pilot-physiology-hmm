@@ -1,7 +1,12 @@
 import tensorflow as tf
 from copy import deepcopy
 import numpy as np
+from functools import reduce
+
 from collections import Counter
+
+from sklearn.preprocessing import MinMaxScaler
+
 
 def convert_nans(y):
     return np.vectorize(lambda x: 0 if np.isnan(x) else x)(y)
@@ -79,26 +84,20 @@ def choose_training_indices(arrays, counts):
     }
 
 
-def build_dataset(arrays, target_indices):
+def build_dataset(arrays, target_indices, batch_size):
     traindata = tf.convert_to_tensor(
             arrays['x_train'][target_indices, :, :],  dtype=tf.float32)
-
     
     labeldata = tf.convert_to_tensor(
         np.argmax(arrays['y_train'][target_indices, :], axis=1))
     
-    # Just try equal weights for now
-    equal_weight = 1/(len(target_indices))
-    weights = tf.convert_to_tensor(np.array(
-        [equal_weight for i in range(len(target_indices))]
-    
-    ))
     
     dataset = tf.data.Dataset.from_tensor_slices(
-        (traindata, labeldata, weights))
+        (traindata, labeldata))
 
-    dataset_batches = dataset.batch(100)
+    dataset_batches = dataset.batch(batch_size)
     return dataset_batches
+
 
 def build_dataset_weighty(arrays, target_indices, class_weights,
         batch_size):
@@ -130,6 +129,64 @@ def build_dataset_weighty(arrays, target_indices, class_weights,
 
     dataset_batches = dataset.batch(batch_size)
     return dataset_batches
+
+
+def build_dataset_weighty_v2(arrays, target_indices, class_weights,
+        batch_size):
+    # Fork of build_dataset_weighty , weights should add up to 1.0 per batch i think.
+
+    indices = deepcopy(target_indices)
+    np.random.shuffle(indices)
+
+    partitions = get_partitions(indices, batch_size)
+
+    # for each  batch... 
+    weights_vec = []
+    train_vec = []
+    label_vec = []
+
+    for part in partitions:
+        #
+        train_vec.append(
+                arrays['x_train'][part, :, :])
+
+        y_train = arrays['y_train'][part, :]
+        class_counts = tf.reduce_sum(y_train, axis=0)
+
+        labels = np.argmax(y_train, axis=1)
+        print(Counter(labels))
+        label_vec.append(labels)
+
+        weights_per_class = np.array([class_weights[x] for x in range(4)]
+                )/class_counts
+        assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
+                < 0.0001)
+
+        print('weights_per_class, ', weights_per_class)
+        weights = [weights_per_class[x] for x in labels]
+        print(sum(weights))
+        assert(1.0 - sum(weights) < 0.001)
+
+        weights_vec.append(weights)
+        
+    weights_tensor = tf.convert_to_tensor(
+            np.concatenate(weights_vec))
+
+    train_tensor = tf.convert_to_tensor(
+            np.concatenate(train_vec),  dtype=tf.float32)
+    #  
+    label_tensor = tf.convert_to_tensor(
+        np.concatenate(label_vec))
+
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (train_tensor, label_tensor, weights_tensor))
+
+    dataset_batches = dataset.batch(batch_size)
+    return dataset_batches
+
+
+
+    
 
 
 def shrink_dataset_subset(arrays, train_target_indices,
@@ -164,6 +221,25 @@ def do_train(model, dataset_batches):
                                 global_step=tf.train.get_or_create_global_step())
 
     return loss_history
+
+def do_train_noweights(model, dataset_batches):
+    optimizer = tf.train.AdamOptimizer()
+
+    loss_history = []
+
+    for (batch, (invec, labels)) in enumerate(dataset_batches.take(1000)):
+
+        with tf.GradientTape() as tape:
+            logits = model(invec, training=True)
+            loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+
+        loss_history.append(loss_value.numpy())
+        grads = tape.gradient(loss_value, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables),
+                                global_step=tf.train.get_or_create_global_step())
+
+    return loss_history
+
 
 
 
@@ -218,3 +294,38 @@ decode_class = np.vectorize(lambda x: {0: 'A',
                                       1: 'B',
                                       2: 'C',
                                       3: 'D'}.get(x))
+
+def do_scaling(arrays):
+    '''
+    Expecting typical data I've had. apply minmax scaling.
+    '''
+    pass
+
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    
+
+def scale_this_thing(x, scaler):
+    length = reduce(lambda y,z: y*z, x.shape)
+    llist = np.reshape(x, newshape=(length, 1))
+
+    return np.reshape(scaler.transform(llist),
+            newshape=x.shape)
+
+
+
+import math
+def get_partitions(vec, slice_size):
+    assert slice_size > 0
+    #assert isinstance(vec, list)
+    num_slices = int(math.floor(len(vec)/slice_size))
+    print('num slices', num_slices)
+    size_remainder = len(vec) - num_slices*slice_size
+    assert size_remainder >= 0
+    print('size_remainder, ', size_remainder)
+    slices = [vec[k*slice_size:k*slice_size+slice_size] for k in range(num_slices)]
+    if size_remainder:
+        slices.append(vec[-(size_remainder):])
+
+    return slices
+
+
