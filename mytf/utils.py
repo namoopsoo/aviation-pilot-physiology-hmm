@@ -329,3 +329,179 @@ def get_partitions(vec, slice_size):
     return slices
 
 
+# Earlier data utils...
+
+encode_class = np.vectorize(lambda x: {'A': 0,
+                                      'B': 1,
+                                      'C': 2,
+                                      'D': 3}.get(x))
+
+decode_class = np.vectorize(lambda x: {0: 'A',
+                                      1: 'B',
+                                      2: 'C',
+                                      3: 'D'}.get(x))
+
+simple_scaler = lambda x, a: x*a 
+
+def timestamp():
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
+
+def do_standard_scaling(df, cols, scalar_dict=None):
+    if scalar_dict is None:    
+        scalar_dict = {col: StandardScaler().fit(df[[col]]) for col in cols}
+        
+    for col in cols:
+        df[col + '_scaled'] = np.resize(
+            scalar_dict[col].transform(df[[col]]),
+            (df.shape[0],))
+    
+    return scalar_dict, df
+
+
+def chomp_crews(df, crews, feature_cols):
+    # Sort it and just bite off selected crews
+    sort_cols = ['crew', 'seat', 'experiment', 'time']
+    target_col = 'event'
+    what_cols = sort_cols + list(feature_cols) + [target_col]
+
+    return df[df.crew.isin(crews)][what_cols].sort_values(
+        by=sort_cols).copy()
+
+
+def make_data(df, crews={'training': [1],
+                        'test': [2]},
+              sequence_window=256, percent_of_data=100,
+             feature_cols={'r': 'standard_scaler'}):
+
+    # current sorted as ['crew', 'experiment', 'time']
+    [0, 1] # each seat
+    ['CA', 'DA', 'SS'] # experiment
+    
+    sort_cols = ['crew', 'seat', 'experiment', 'time']
+    target_col = 'event'
+    
+    what_cols = sort_cols + list(feature_cols) + [target_col]
+
+    # Training
+    traindf = df[df.crew.isin(crews['training'])][what_cols].sort_values(
+        by=sort_cols).copy()
+    
+    scalar_dict, _ = do_standard_scaling(traindf, ['r'])
+    
+    print('Start building training set', timestamp())
+    x_train, y_train = get_windows(traindf, ['r_scaled', 'event'],
+                                   sequence_window,
+                                  percent_of_data=percent_of_data)
+    
+    # Testing
+    testdf = df[df.crew.isin(crews['test'])][what_cols].sort_values(
+        by=sort_cols).copy()
+
+    _, _ = do_standard_scaling(testdf, ['r'], scalar_dict)
+    
+    
+    print('Start building testing set', timestamp())
+    x_test, y_test = get_windows(testdf, ['r_scaled', 'event'],
+                                 sequence_window,
+                                 percent_of_data=percent_of_data)
+
+
+    outdata = {
+        "x_train": x_train,
+        "y_train": reshape_y(encode_class(y_train), 4), # y_train,
+        "x_test": x_test,
+        "y_test": reshape_y(encode_class(y_test), 4), # y_test
+        "y_train_original": y_train,
+        "y_test_original": y_test,
+        "traindf": traindf,
+        "testdf": testdf,}
+    metadata = {
+        "metadata": {
+            "output": {
+                "shapes": {k: outdata[k].shape for k in list(outdata)},
+                "Counter(outdata['y_train_original'])":
+                dict(Counter(y_train)),
+                "Counter(outdata['y_test_original'])":
+                dict(Counter(y_test)),},
+            "input": {"kwargs": {
+                "crews": crews,
+                "percent_of_data": percent_of_data,
+                "sequence_window": sequence_window,
+                "feature_cols": list(feature_cols)}},
+            "data_ts": timestamp()
+        }}
+            
+    return {**outdata, **metadata}
+    
+    
+def runner():
+    print('Start make_data', timestamp())
+    outdata = make_data(df, crews={'training': [1],
+                        'test': [2]},
+              sequence_window=256, percent_of_data=1,
+             feature_cols={'r': simple_scaler})
+    
+    validate_data(outdata)
+
+    print('Start bake_model', timestamp())
+    model = bake_model(**outdata, epochs=2)
+    return outdata, model
+
+def validate_data(data):
+    assert len(Counter(data['y_train_original'])) > 1
+    assert len(Counter(data['y_test_original'])) > 1
+  
+
+ 
+def get_windows(df, cols, window_size, percent_of_data=100):
+    
+    whats_proportion_index = lambda x, y: round(x*y)
+    
+    X = []
+    Y = []
+    choices = (df.crew.unique().tolist(), [0, 1], ['CA', 'DA', 'SS'])
+    for crew, seat, experiment in itertools.product(*choices):
+        query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
+        thisdf = df[query][cols]
+        X_i, Y_i = to_sequences(thisdf.values, window_size)
+        X.append(X_i[:
+                     whats_proportion_index(
+                         X_i.shape[0],
+                         percent_of_data)])
+        Y.append(Y_i[:
+                     whats_proportion_index(
+                        Y_i.shape[0],
+                        percent_of_data)])
+        
+    return np.concatenate(X), np.concatenate(Y)
+
+# Borrowing parts of this func from 
+# https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
+def to_sequences(obs, seq_size, incols=[0], outcols=[1]):
+    x = []
+    y = []
+
+    for i in range(len(obs)-seq_size-1):
+        #print(i)
+        window = obs[i:(i+seq_size)][..., 0]
+        after_window = obs[i+seq_size, 1] # FIXME :off by 1 error here?
+        # window = [[x] for x in window]
+
+        x.append(window)
+        y.append(after_window)
+        
+    xarr = np.array(x)
+    yarr = np.array(y)
+    return (np.resize(xarr, xarr.shape + (1,)),
+            yarr)
+    
+    
+
+def reshape_y(y, num_cols):
+
+    # y = np.array([1,2,3,2,3,1],dtype=np.int32)
+
+    # Convert y2 to dummy variables
+    y2 = np.zeros((y.shape[0], num_cols), dtype=np.float32)
+    y2[np.arange(y.shape[0]), y] = 1.0
+    return y2
