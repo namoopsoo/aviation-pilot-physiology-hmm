@@ -131,10 +131,10 @@ def build_dataset_weighty(arrays, target_indices, class_weights,
     return dataset_batches
 
 
-def build_dataset_weighty_v2(arrays, target_indices, class_weights,
+def build_dataset_weighty_v3(arrays, target_indices, class_weights,
         batch_size):
     # Fork of build_dataset_weighty , weights should add up to 1.0 per batch i think.
-
+    print('Start build v3: .. doesnt add up to 1.0')
     indices = deepcopy(target_indices)
     np.random.shuffle(indices)
 
@@ -159,13 +159,13 @@ def build_dataset_weighty_v2(arrays, target_indices, class_weights,
 
         weights_per_class = np.array([class_weights[x] for x in range(4)]
                 )/class_counts
-        assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
-                < 0.0001)
+        #assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
+        #        < 0.0001)
 
         print('weights_per_class, ', weights_per_class)
-        weights = [weights_per_class[x] for x in labels]
+        weights = [class_weights[x] for x in labels]   # 
         print(sum(weights))
-        assert(1.0 - sum(weights) < 0.001)
+        # assert(1.0 - sum(weights) < 0.001)
 
         weights_vec.append(weights)
         
