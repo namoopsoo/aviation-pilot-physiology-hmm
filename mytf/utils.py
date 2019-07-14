@@ -1,4 +1,6 @@
 import tensorflow as tf
+import datetime
+import itertools
 from copy import deepcopy
 import numpy as np
 from functools import reduce
@@ -6,6 +8,7 @@ from functools import reduce
 from collections import Counter
 
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 def convert_nans(y):
@@ -371,7 +374,7 @@ def chomp_crews(df, crews, feature_cols):
 def make_data(df, crews={'training': [1],
                         'test': [2]},
               sequence_window=256, percent_of_data=100,
-             feature_cols={'r': 'standard_scaler'}):
+             feature_cols=['r']):
 
     # current sorted as ['crew', 'experiment', 'time']
     [0, 1] # each seat
@@ -379,29 +382,30 @@ def make_data(df, crews={'training': [1],
     
     sort_cols = ['crew', 'seat', 'experiment', 'time']
     target_col = 'event'
+
+    feat_cols_scaled = [
+            x + '_scaled' for x in feature_cols ]
     
-    what_cols = sort_cols + list(feature_cols) + [target_col]
+    what_cols = sort_cols + feature_cols + [target_col]
 
     # Training
-    traindf = df[df.crew.isin(crews['training'])][what_cols].sort_values(
-        by=sort_cols).copy()
+    traindf = df[df.crew.isin(crews['training'])][what_cols].copy()
     
-    scalar_dict, _ = do_standard_scaling(traindf, ['r'])
+    scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
     
     print('Start building training set', timestamp())
-    x_train, y_train = get_windows(traindf, ['r_scaled', 'event'],
+    x_train, y_train = get_windows(traindf, feat_cols_scaled + ['event'],
                                    sequence_window,
                                   percent_of_data=percent_of_data)
     
     # Testing
-    testdf = df[df.crew.isin(crews['test'])][what_cols].sort_values(
-        by=sort_cols).copy()
+    testdf = df[df.crew.isin(crews['test'])][what_cols].copy()
 
-    _, _ = do_standard_scaling(testdf, ['r'], scalar_dict)
+    _, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
     
     
     print('Start building testing set', timestamp())
-    x_test, y_test = get_windows(testdf, ['r_scaled', 'event'],
+    x_test, y_test = get_windows(testdf, feat_cols_scaled + ['event'],
                                  sequence_window,
                                  percent_of_data=percent_of_data)
 
@@ -454,7 +458,7 @@ def validate_data(data):
 
  
 def get_windows(df, cols, window_size, percent_of_data=100):
-    
+    # Assumes last col is one and only label col 
     whats_proportion_index = lambda x, y: round(x*y)
     
     X = []
@@ -463,7 +467,9 @@ def get_windows(df, cols, window_size, percent_of_data=100):
     for crew, seat, experiment in itertools.product(*choices):
         query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
         thisdf = df[query][cols]
-        X_i, Y_i = to_sequences(thisdf.values, window_size)
+        X_i, Y_i = to_sequences(thisdf.values, window_size,
+                                incols=[range(len(cols) - 1)],
+                                outcol=-1)
         X.append(X_i[:
                      whats_proportion_index(
                          X_i.shape[0],
@@ -477,14 +483,14 @@ def get_windows(df, cols, window_size, percent_of_data=100):
 
 # Borrowing parts of this func from 
 # https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
-def to_sequences(obs, seq_size, incols=[0], outcols=[1]):
+def to_sequences(obs, seq_size, incols, outcol):
     x = []
     y = []
 
     for i in range(len(obs)-seq_size-1):
         #print(i)
-        window = obs[i:(i+seq_size)][..., 0]
-        after_window = obs[i+seq_size, 1] # FIXME :off by 1 error here?
+        window = obs[i:(i+seq_size)][:,incols]
+        after_window = obs[i+seq_size, outcol] # FIXME :off by 1 error here?
         # window = [[x] for x in window]
 
         x.append(window)
