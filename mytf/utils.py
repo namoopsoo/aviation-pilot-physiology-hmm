@@ -468,7 +468,7 @@ def get_windows(df, cols, window_size, percent_of_data=100):
         query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
         thisdf = df[query][cols]
         X_i, Y_i = to_sequences(thisdf.values, window_size,
-                                incols=[range(len(cols) - 1)],
+                                incols=range(len(cols) - 1),
                                 outcol=-1)
         X.append(X_i[:
                      whats_proportion_index(
@@ -498,7 +498,7 @@ def to_sequences(obs, seq_size, incols, outcol):
         
     xarr = np.array(x)
     yarr = np.array(y)
-    return (np.resize(xarr, xarr.shape + (1,)),
+    return (xarr,
             yarr)
     
     
