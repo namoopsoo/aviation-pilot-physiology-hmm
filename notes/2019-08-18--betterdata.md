@@ -58,8 +58,19 @@ indices = mu.choose_training_indices(outdata, [15000, 15000, 15000, 15000], dict
 In [53]: Counter(np.argmax(outdata['y_test'][reduce(lambda x,y:x+y,indices.values()), :], axis=1))                                   
 Out[53]: Counter({0: 15000, 1: 15000, 2: 15000, 3: 15000})
 
+```
 
-
+##### Save it.  but use this as train data  (flipping it basically) because somehow test has more examples.
+```python
+train_subset = reduce(lambda x,y:x+y,indices.values())
+aug18data = {
+    'x_train': outdata['x_test'][train_subset],
+    'y_train': outdata['y_test'][train_subset],
+    }
+    
+    
+with open('models/2019-08-18-outdata-SUBSET60k.pkl', 'wb') as fd:
+    pickle.dump(aug18data, fd)
 ```
 
 
