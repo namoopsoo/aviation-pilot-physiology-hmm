@@ -68,23 +68,24 @@ def tf_f1_score(y_true, y_pred, method=None):
     return micro, macro, weighted, f1
 
 
-def fetch_some_examples(arrays, which_col, n=10):
+def fetch_some_examples(arrays, which_col, dict_key, n=10):
     '''
     Lazily find the row indices of the training data, 
     for the given class (which_col).
 
     n: how many indices to fetch
     '''
-    gg = (i for i in np.arange(1, 446110, 1) 
-            if arrays['y_train'][i][which_col] == 1)
+    rows = arrays[dict_key].shape[0]
+    gg = (i for i in np.arange(1, rows, 1) 
+            if arrays[dict_key][i][which_col] == 1)
     
     return [gg.__next__() for i in range(n)]
 
 
-def choose_training_indices(arrays, counts):
+def choose_training_indices(arrays, counts, dict_key):
     return {
-        i: fetch_some_examples(arrays, i, n=n) for (i, n) in enumerate(counts)
-    }
+        i: fetch_some_examples(arrays, i, dict_key=dict_key, n=n)
+        for (i, n) in enumerate(counts) }
 
 
 def build_dataset(arrays, target_indices, batch_size):
@@ -211,8 +212,8 @@ def shrink_dataset_subset(arrays, train_target_indices,
             'y_train': arrays['y_train'][train_target_indices, :],
             'y_test': arrays['y_test'][test_target_indices, :],
 
-            'y_train_original': arrays['y_train_original'][train_target_indices],
-            'y_test_original': arrays['y_test_original'][test_target_indices],
+            #'y_train_original': arrays['y_train_original'][train_target_indices],
+            #'y_test_original': arrays['y_test_original'][test_target_indices],
             }
 
 
