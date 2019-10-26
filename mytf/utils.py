@@ -1,6 +1,7 @@
 import tensorflow as tf
 import datetime
 import itertools
+import math
 from copy import deepcopy
 import numpy as np
 from functools import reduce
@@ -9,6 +10,13 @@ from collections import Counter
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+
+
+def timestamp():
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
+
+def quickts():
+    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime('%Y-%m-%dT%H%M%SZ')
 
 
 def convert_nans(y):
@@ -326,7 +334,6 @@ def scale_this_thing(x, scaler):
 
 
 
-import math
 def get_partitions(vec, slice_size):
     assert slice_size > 0
     #assert isinstance(vec, list)
@@ -356,8 +363,6 @@ decode_class = np.vectorize(lambda x: {0: 'A',
 
 simple_scaler = lambda x, a: x*a 
 
-def timestamp():
-    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
 
 def do_standard_scaling(df, cols, scalar_dict=None):
     if scalar_dict is None:    
