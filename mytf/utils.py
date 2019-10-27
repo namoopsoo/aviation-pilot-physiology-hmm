@@ -526,3 +526,18 @@ def reshape_y(y, num_cols):
     y2 = np.zeros((y.shape[0], num_cols), dtype=np.float32)
     y2[np.arange(y.shape[0]), y] = 1.0
     return y2
+
+
+def is_it_sorted_by_time(df):
+    choices = (df.crew.unique(),
+               df.seat.unique(),
+               df.experiment.unique())
+    meta = {}
+    for crew, seat, experiment in itertools.product(*choices):
+        query = ((df.crew == crew)
+                & (df.seat == seat)
+                & (df.experiment == experiment))
+        times = df[query].time.tolist()
+        meta[(crew, seat, experiment)] = times == sorted(list(set(times)))
+    return meta
+
