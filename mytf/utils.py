@@ -11,6 +11,8 @@ from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 
+ALL_FEATURE_COLS = ['eeg_fp1', 'eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', 'eeg_t5', 'eeg_t3', 'eeg_fp2', 'eeg_o1', 'eeg_p3', 'eeg_pz', 'eeg_f3', 'eeg_fz', 'eeg_f4', 'eeg_c4', 'eeg_p4', 'eeg_poz', 'eeg_c3', 'eeg_cz', 'eeg_o2', 'ecg', 'r', 'gsr',]
+
 
 def timestamp():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
@@ -473,6 +475,7 @@ def validate_data(data):
 
  
 def get_windows(df, cols, window_size, percent_of_data=100):
+                                        # FIXME ^^ percent_of_data, perhaps too limiting.
     # Assumes last col is one and only label col 
     whats_proportion_index = lambda x, y: round(x*y)
     
@@ -502,11 +505,9 @@ def to_sequences(obs, seq_size, incols, outcol):
     x = []
     y = []
 
-    for i in range(len(obs)-seq_size-1):
-        #print(i)
+    for i in range(len(obs)-seq_size):
         window = obs[i:(i+seq_size)][:,incols]
-        after_window = obs[i+seq_size, outcol] # FIXME :off by 1 error here?
-        # window = [[x] for x in window]
+        after_window = obs[i+seq_size - 1, outcol]
 
         x.append(window)
         y.append(after_window)
@@ -540,4 +541,18 @@ def is_it_sorted_by_time(df):
         times = df[query].time.tolist()
         meta[(crew, seat, experiment)] = times == sorted(list(set(times)))
     return meta
+
+
+def split_data_by_crew(df, outdir):
+    meta = {}
+    feature_cols = ALL_FEATURE_COLS
+
+    for crew in df.crew.unique():
+        filename = f'{outdir}/crew_{crew}-train.pkl'
+        # write ... 
+        outdf = chomp_crews(df, [crew], feature_cols)
+        outdf.to_pickle(filename)
+        meta[crew] = filename
+    return meta
+
 
