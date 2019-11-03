@@ -528,6 +528,9 @@ def _inner_get_windows(df, cols, window_size):
     for crew, seat, experiment in itertools.product(*choices):
         query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
         thisdf = df[query][cols]
+        if thisdf.empty:
+            continue
+
         X_i, Y_i = to_sequences(thisdf.values, window_size,
                                 incols=range(len(cols) - 1),
                                 outcol=-1)
