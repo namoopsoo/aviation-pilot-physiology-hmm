@@ -2,6 +2,7 @@ import tensorflow as tf
 import datetime
 import itertools
 import math
+import h5py
 from copy import deepcopy
 import numpy as np
 from functools import reduce
@@ -390,10 +391,12 @@ def chomp_crews(df, crews, feature_cols):
 
 def make_data(df, crews={'training': [1],
                         'test': [2]},
-              sequence_window=256, percent_of_data=100,
-             feature_cols=['r']):
+                        window_size=256, 
+                        row_batch_size=None,
+                        feature_cols=['r'],
+                        save_dir=None):
 
-    # current sorted as ['crew', 'experiment', 'time']
+    # current sorted as ['crew', 'seat', 'experiment', 'time']
     [0, 1] # each seat
     ['CA', 'DA', 'SS'] # experiment
     
@@ -406,26 +409,25 @@ def make_data(df, crews={'training': [1],
     what_cols = sort_cols + feature_cols + [target_col]
 
     # Training
+    print('Start building training set', quickts())
     traindf = df[df.crew.isin(crews['training'])][what_cols].copy()
-    
     scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
-    
-    print('Start building training set', timestamp())
-    x_train, y_train = get_windows(traindf, feat_cols_scaled + ['event'],
-                                   sequence_window,
-                                  percent_of_data=percent_of_data)
-    
+    train_datasets = get_windows_h5(traindf,
+                                    cols=feat_cols_scaled + ['event'],
+                                    window_size=window_size,
+                                    row_batch_size=row_batch_size,
+                                    save_location=f'{save_dir}/train.h5')
+
     # Testing
+    print('Start building testing set', quickts())
     testdf = df[df.crew.isin(crews['test'])][what_cols].copy()
-
     _, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
-    
-    
-    print('Start building testing set', timestamp())
-    x_test, y_test = get_windows(testdf, feat_cols_scaled + ['event'],
-                                 sequence_window,
-                                 percent_of_data=percent_of_data)
-
+    test_datasets = get_windows_h5(testdf,
+                                    cols=feat_cols_scaled + ['event'],
+                                    window_size=window_size,
+                                    row_batch_size=row_batch_size,
+                                    save_location=f'{save_dir}/test.h5')
+    return
 
     outdata = {
         "x_train": x_train,
@@ -446,10 +448,10 @@ def make_data(df, crews={'training': [1],
                 dict(Counter(y_test)),},
             "input": {"kwargs": {
                 "crews": crews,
-                "percent_of_data": percent_of_data,
-                "sequence_window": sequence_window,
+                #"percent_of_data": percent_of_data,
+                "window_size": window_size,
                 "feature_cols": list(feature_cols)}},
-            "data_ts": timestamp()
+            "data_ts": quickts()
         }}
             
     return {**outdata, **metadata}
@@ -498,6 +500,41 @@ def get_windows(df, cols, window_size, percent_of_data=100):
                         percent_of_data)])
         
     return np.concatenate(X), np.concatenate(Y)
+
+
+def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
+    # for every <row_batch_size> rows, save to disk, to <save_location>.
+    parts = get_partitions(range(df.shape[0]), row_batch_size)
+    datasets = []
+    for i, part in enumerate(parts):
+        X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
+        # Save to disk...
+        with h5py.File(save_location, "a") as f:
+            dataset_name = f'dataset_{i}'
+            datasets.append(dataset_name)
+            f.create_dataset(dataset_name,
+                    data={
+                        'X': X,
+                        'Y': reshape_y(encode_class(Y), 4),
+                        'part': [part[0], part[-1]]})
+    return datasets
+
+
+def _inner_get_windows(df, cols, window_size):
+    X = []
+    Y = []
+    choices = (df.crew.unique().tolist(), [0, 1], ['CA', 'DA', 'SS'])
+    for crew, seat, experiment in itertools.product(*choices):
+        query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
+        thisdf = df[query][cols]
+        X_i, Y_i = to_sequences(thisdf.values, window_size,
+                                incols=range(len(cols) - 1),
+                                outcol=-1)
+        X.append(X_i)
+        Y.append(Y_i)
+        
+    return np.concatenate(X), np.concatenate(Y)
+
 
 # Borrowing parts of this func from 
 # https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
