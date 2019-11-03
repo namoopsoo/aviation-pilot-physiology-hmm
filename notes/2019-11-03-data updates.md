@@ -72,4 +72,12 @@ with h5py.File("datanewnew.h5", "a") as f:
 
 ```
 
+#### Also, no strings to h5
+* Sort of obvious, but when i tried , this failed..
+```python
+with h5py.File("datanewnew.h5", "a") as f: 
+    f.create_dataset('dataset_foo', data={'ok': vec1})
 
+TypeError: Object dtype dtype('O') has no native HDF5 equivalent
+
+``
