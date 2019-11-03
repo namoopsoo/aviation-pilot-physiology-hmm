@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def make_series_from_cols(df, col, indices):
     label_col = 'event'    
