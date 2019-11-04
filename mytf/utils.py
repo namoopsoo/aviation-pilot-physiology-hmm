@@ -398,9 +398,8 @@ def make_data(df, crews={'training': [1],
                         save_dir=None):
 
     # current sorted as ['crew', 'seat', 'experiment', 'time']
-    [0, 1] # each seat
-    ['CA', 'DA', 'SS'] # experiment
-
+    # [0, 1] # each seat
+    # ['CA', 'DA', 'SS'] # experiment
     sort_cols = ['crew', 'seat', 'experiment', 'time']
     target_col = 'event'
 
@@ -513,9 +512,11 @@ def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
         with h5py.File(save_location, "a") as f:
             X_name, Y_name = f'dataset_{i}_X', f'dataset_{i}_Y'
             datasets.append({'X_name': X_name, 'Y_name': Y_name})
-            f.create_dataset(X_name, data=X)
+            f.create_dataset(X_name, data=np.array(X, dtype=float))
             f.create_dataset(Y_name,
-                            data=reshape_y(encode_class(Y), 4))
+                            data=np.array(
+                                reshape_y(encode_class(Y), 4),
+                                dtype=float))
     return datasets
 
 
