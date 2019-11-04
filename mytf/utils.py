@@ -82,32 +82,32 @@ def tf_f1_score(y_true, y_pred, method=None):
 
 def fetch_some_examples(arrays, which_col, dict_key, n=10):
     '''
-    Lazily find the row indices of the training data, 
+    Lazily find the row indices of the training data,
     for the given class (which_col).
 
     n: how many indices to fetch
     '''
     rows = arrays[dict_key].shape[0]
-    gg = (i for i in np.arange(1, rows, 1) 
+    gg = (i for i in np.arange(1, rows, 1)
             if arrays[dict_key][i][which_col] == 1)
-    
+
     return [gg.__next__() for i in range(n)]
 
 
 def choose_training_indices(arrays, counts, dict_key):
     return {
         i: fetch_some_examples(arrays, i, dict_key=dict_key, n=n)
-        for (i, n) in enumerate(counts) }
+        for (i, n) in enumerate(counts)}
 
 
 def build_dataset(arrays, target_indices, batch_size):
     traindata = tf.convert_to_tensor(
-            arrays['x_train'][target_indices, :, :],  dtype=tf.float32)
-    
+            arrays['x_train'][target_indices, :, :], dtype=tf.float32)
+
     labeldata = tf.convert_to_tensor(
         np.argmax(arrays['y_train'][target_indices, :], axis=1))
-    
-    
+
+
     dataset = tf.data.Dataset.from_tensor_slices(
         (traindata, labeldata))
 
@@ -137,9 +137,9 @@ def build_dataset_weighty(arrays, target_indices, class_weights,
     weights = [weights_per_class[x] for x in labels]
     print(sum(weights))
     assert(1.0 - sum(weights) < 0.001)
-    
+
     weights_tensor = tf.convert_to_tensor(np.array(weights))
-    
+
     dataset = tf.data.Dataset.from_tensor_slices(
         (train_tensor, label_tensor, weights_tensor))
 
@@ -156,7 +156,7 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
 
     partitions = get_partitions(indices, batch_size)
 
-    # for each  batch... 
+    # for each  batch...
     weights_vec = []
     train_vec = []
     label_vec = []
@@ -179,7 +179,7 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
         #        < 0.0001)
 
         print('weights_per_class, ', weights_per_class)
-        weights = [class_weights[x] for x in labels]   # 
+        weights = [class_weights[x] for x in labels]   #
         print(sum(weights))
         # assert(1.0 - sum(weights) < 0.001)
 
@@ -193,13 +193,13 @@ def build_dataset_weighty_v3(arrays, target_indices, class_weights,
     train_vec, label_vec, weights_vec = \
             helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
                     batch_size)
-        
+
     weights_tensor = tf.convert_to_tensor(
             np.concatenate(weights_vec))
 
     train_tensor = tf.convert_to_tensor(
-            np.concatenate(train_vec),  dtype=tf.float32)
-    #  
+            np.concatenate(train_vec), dtype=tf.float32)
+    #
     label_tensor = tf.convert_to_tensor(
         np.concatenate(label_vec))
 
@@ -211,7 +211,7 @@ def build_dataset_weighty_v3(arrays, target_indices, class_weights,
 
 
 
-    
+
 
 
 def shrink_dataset_subset(arrays, train_target_indices,
@@ -283,7 +283,7 @@ def do_train_f1_loss(model, dataset_batches):
             micro, macro, weighted, f1 = tf_f1_score(
                     one_hot(labels, convert=True),
                     one_hot(np.argmax(logits, axis=1), convert=False),
-                    
+
                     )
             loss_value = macro
 
@@ -327,10 +327,10 @@ def do_scaling(arrays):
     pass
 
     scaler = MinMaxScaler(feature_range=(0, 1))
-    
+
 
 def scale_this_thing(x, scaler):
-    length = reduce(lambda y,z: y*z, x.shape)
+    length = reduce(lambda y, z: y*z, x.shape)
     llist = np.reshape(x, newshape=(length, 1))
 
     return np.reshape(scaler.transform(llist),
@@ -365,18 +365,18 @@ decode_class = np.vectorize(lambda x: {0: 'A',
                                       2: 'C',
                                       3: 'D'}.get(x))
 
-simple_scaler = lambda x, a: x*a 
+simple_scaler = lambda x, a: x*a
 
 
 def do_standard_scaling(df, cols, scalar_dict=None):
-    if scalar_dict is None:    
+    if scalar_dict is None:
         scalar_dict = {col: StandardScaler().fit(df[[col]]) for col in cols}
-        
+
     for col in cols:
         df[col + '_scaled'] = np.resize(
             scalar_dict[col].transform(df[[col]]),
             (df.shape[0],))
-    
+
     return scalar_dict, df
 
 
@@ -392,7 +392,7 @@ def chomp_crews(df, crews, feature_cols):
 
 def make_data(df, crews={'training': [1],
                         'test': [2]},
-                        window_size=256, 
+                        window_size=256,
                         row_batch_size=None,
                         feature_cols=['r'],
                         save_dir=None):
@@ -400,13 +400,13 @@ def make_data(df, crews={'training': [1],
     # current sorted as ['crew', 'seat', 'experiment', 'time']
     [0, 1] # each seat
     ['CA', 'DA', 'SS'] # experiment
-    
+
     sort_cols = ['crew', 'seat', 'experiment', 'time']
     target_col = 'event'
 
     feat_cols_scaled = [
-            x + '_scaled' for x in feature_cols ]
-    
+            x + '_scaled' for x in feature_cols]
+
     what_cols = sort_cols + feature_cols + [target_col]
 
     # Training
@@ -454,17 +454,17 @@ def make_data(df, crews={'training': [1],
                 "feature_cols": list(feature_cols)}},
             "data_ts": quickts()
         }}
-            
+
     return {**outdata, **metadata}
-    
-    
+
+
 def runner():
     print('Start make_data', timestamp())
     outdata = make_data(df, crews={'training': [1],
                         'test': [2]},
               sequence_window=256, percent_of_data=1,
              feature_cols={'r': simple_scaler})
-    
+
     validate_data(outdata)
 
     print('Start bake_model', timestamp())
@@ -474,14 +474,14 @@ def runner():
 def validate_data(data):
     assert len(Counter(data['y_train_original'])) > 1
     assert len(Counter(data['y_test_original'])) > 1
-  
 
- 
+
+
 def get_windows(df, cols, window_size, percent_of_data=100):
                                         # FIXME ^^ percent_of_data, perhaps too limiting.
-    # Assumes last col is one and only label col 
+    # Assumes last col is one and only label col
     whats_proportion_index = lambda x, y: round(x*y)
-    
+
     X = []
     Y = []
     choices = (df.crew.unique().tolist(), [0, 1], ['CA', 'DA', 'SS'])
@@ -499,7 +499,7 @@ def get_windows(df, cols, window_size, percent_of_data=100):
                      whats_proportion_index(
                         Y_i.shape[0],
                         percent_of_data)])
-        
+
     return np.concatenate(X), np.concatenate(Y)
 
 
@@ -511,13 +511,11 @@ def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
         X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
         # Save to disk...
         with h5py.File(save_location, "a") as f:
-            dataset_name = f'dataset_{i}'
-            datasets.append(dataset_name)
-            f.create_dataset(dataset_name,
-                    data={
-                        'X': X,
-                        'Y': reshape_y(encode_class(Y), 4),
-                        'part': [part[0], part[-1]]})
+            X_name, Y_name = f'dataset_{i}_X', f'dataset_{i}_Y'
+            datasets.append({'X_name': X_name, 'Y_name': Y_name})
+            f.create_dataset(X_name, data=X)
+            f.create_dataset(Y_name,
+                            data=reshape_y(encode_class(Y), 4))
     return datasets
 
 
@@ -536,29 +534,29 @@ def _inner_get_windows(df, cols, window_size):
                                 outcol=-1)
         X.append(X_i)
         Y.append(Y_i)
-        
+
     return np.concatenate(X), np.concatenate(Y)
 
 
-# Borrowing parts of this func from 
+# Borrowing parts of this func from
 # https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
 def to_sequences(obs, seq_size, incols, outcol):
     x = []
     y = []
 
     for i in range(len(obs)-seq_size):
-        window = obs[i:(i+seq_size)][:,incols]
+        window = obs[i:(i+seq_size)][:, incols]
         after_window = obs[i+seq_size - 1, outcol]
 
         x.append(window)
         y.append(after_window)
-        
+
     xarr = np.array(x)
     yarr = np.array(y)
     return (xarr,
             yarr)
-    
-    
+
+
 
 def reshape_y(y, num_cols):
 
@@ -590,7 +588,7 @@ def split_data_by_crew(df, outdir):
 
     for crew in df.crew.unique():
         filename = f'{outdir}/crew_{crew}-train.pkl'
-        # write ... 
+        # write ...
         outdf = chomp_crews(df, [crew], feature_cols)
         outdf.to_pickle(filename)
         meta[crew] = filename
