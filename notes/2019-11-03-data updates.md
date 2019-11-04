@@ -79,5 +79,5 @@ with h5py.File("datanewnew.h5", "a") as f:
     f.create_dataset('dataset_foo', data={'ok': vec1})
 
 TypeError: Object dtype dtype('O') has no native HDF5 equivalent
-
-``
+```
+* Actually less ovvious, same error I got when simply trying to save a python list. Like a list of numpy arrays.
