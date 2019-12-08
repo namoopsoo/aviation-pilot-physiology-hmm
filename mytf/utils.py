@@ -211,9 +211,6 @@ def build_dataset_weighty_v3(arrays, target_indices, class_weights,
 
 
 
-
-
-
 def shrink_dataset_subset(arrays, train_target_indices,
         test_target_indices):
     # Dataset is tremendous so lets use memory just for what i'm using...
@@ -243,7 +240,7 @@ def do_train(model, dataset_batches):
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.train.get_or_create_global_step())
+                                global_step=tf.compat.v1.train.get_or_create_global_step())
 
     return loss_history
 
@@ -261,7 +258,7 @@ def do_train_noweights(model, dataset_batches):
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.train.get_or_create_global_step())
+                                global_step=tf.compat.v1.train.get_or_create_global_step())
 
     return loss_history
 
@@ -291,7 +288,7 @@ def do_train_f1_loss(model, dataset_batches):
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.train.get_or_create_global_step())
+                                global_step=tf.compat.v1.train.get_or_create_global_step())
 
     return loss_history
 
@@ -594,5 +591,67 @@ def split_data_by_crew(df, outdir):
         outdf.to_pickle(filename)
         meta[crew] = filename
     return meta
+
+
+
+
+def read_h5(source_location, Xdataset, Ydataset):
+    with h5py.File(source_location, 'r+') as fd:
+        X = fd[Xdataset].__array__()
+        Y = fd[Ydataset].__array__()
+        Ylabels = np.argmax(Y, axis=1)
+        counters_index[i] = dict(Counter(labels))
+    return X, Ylabels
+
+def read_h5_two(source_location, Xdataset, Ydataset):
+    with h5py.File(source_location, 'r+') as fd:
+        X = fd[Xdataset].__array__()
+        Y = fd[Ydataset].__array__()
+        #Ylabels = np.argmax(Y, axis=1)
+        #counters_index[i] = dict(Counter(labels))
+    return X, Y
+        
+    
+def transfer_data(source_location,
+                  source_datasets,
+                 save_location,
+                 label,
+                 howmany):
+    Xvec = []
+    Ylabelvec = []
+    # look for a certain amount of examples and transfer them to thew new location.
+    sofar = 0
+    for Xdataset, Ydataset in source_datasets:
+
+        X, Ylabels = read_h5(source_location, Xdataset, Ydataset)
+        indices = [i for i in range(Ylabels.shape[0])
+                  if Ylabels[i] == label]
+        if indices:
+            X_a = X[indices, :]
+            Ylabels_a = Ylabels[indices]
+            Xvec.append(X_a)
+            Ylabelvec.append(Ylabels_a)
+            sofar += len(indices)
+        
+        if sofar >= howmany:
+            print('ok breaking')
+            break
+    Xfull = np.concatenate(Xvec)
+    Yfull = np.concatenate(Ylabelvec)
+    save_that(save_location,
+             f'X_{label}',
+             Xfull)
+    
+    save_that(save_location,
+             f'Ylabels_{label}',
+             Yfull)
+    print('Saved with ', Counter(Yfull))
+
+
+def save_that(save_location, name, X):
+    with h5py.File(save_location, "a") as f:
+        f.create_dataset(name, data=np.array(X, dtype=float))
+
+
 
 
