@@ -251,7 +251,8 @@ def do_train(model, dataset_batches, k, saveloc):
                                 global_step=tf.compat.v1.train.get_or_create_global_step())
 
         save_model(model, f'{saveloc}/{str(batch).zfill(5)}_model.h5')
-        to_json_local(loss_history, f'{saveloc}/{str(batch).zfill(5)}_train_loss_history.json')
+        to_json_local([float(x) for x in loss_history],
+                f'{saveloc}/{str(batch).zfill(5)}_train_loss_history.json')
 
     return loss_history
 
