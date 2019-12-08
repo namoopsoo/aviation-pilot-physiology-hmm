@@ -8,6 +8,7 @@ from copy import deepcopy
 import numpy as np
 from functools import reduce
 from tensorflow import keras
+frmo tqdm import tqdm
 
 
 from collections import Counter
@@ -237,7 +238,7 @@ def do_train(model, dataset_batches, k, saveloc):
 
     loss_history = []
 
-    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(k)):
+    for (batch, (invec, labels, weights)) in tqdm(enumerate(dataset_batches.take(k))):
 
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
