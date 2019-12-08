@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 from functools import reduce
 from tensorflow import keras
-frmo tqdm import tqdm
+from tqdm import tqdm
 
 
 from collections import Counter
