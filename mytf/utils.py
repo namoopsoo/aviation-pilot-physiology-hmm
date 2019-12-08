@@ -226,12 +226,12 @@ def shrink_dataset_subset(arrays, train_target_indices,
             }
 
 
-def do_train(model, dataset_batches):
+def do_train(model, dataset_batches, k):
     optimizer = tf.train.AdamOptimizer()
 
     loss_history = []
 
-    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(1000)):
+    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(k)):
 
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
@@ -653,5 +653,18 @@ def save_that(save_location, name, X):
         f.create_dataset(name, data=np.array(X, dtype=float))
 
 
+def get_performance(model, dataloc, dataset_names):
+    # dataloc contains the test data..
+    lossvec = []
+    for Xdataset, Ydataset in dataset_names:
+
+        X, Ylabels = read_h5_two(dataloc, Xdataset, Ydataset) 
+    
+        preds = model(X.astype('float32'))
+        loss = tf.losses.sparse_softmax_cross_entropy(labels=Ylabels.astype('int64'),
+                                               logits=preds.numpy()).numpy()
+
+        lossvec.append(loss)
+    return lossvec
 
 
