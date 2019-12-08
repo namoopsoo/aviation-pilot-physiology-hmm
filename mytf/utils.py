@@ -7,6 +7,8 @@ import h5py
 from copy import deepcopy
 import numpy as np
 from functools import reduce
+from tensorflow import keras
+
 
 from collections import Counter
 
@@ -118,7 +120,7 @@ def build_dataset(arrays, target_indices, batch_size):
 def build_dataset_weighty(arrays, target_indices, class_weights,
         batch_size):
     train_tensor = tf.convert_to_tensor(
-            arrays['x_train'][target_indices, :, :],  dtype=tf.float32)
+            arrays['x_train'][target_indices, :, :], dtype=tf.float32)
 
     y_train = arrays['y_train'][target_indices, :]
     class_counts = tf.reduce_sum(y_train, axis=0)
@@ -230,7 +232,7 @@ def shrink_dataset_subset(arrays, train_target_indices,
             }
 
 
-def do_train(model, dataset_batches, k):
+def do_train(model, dataset_batches, k, saveloc):
     optimizer = tf.train.AdamOptimizer()
 
     loss_history = []
@@ -246,7 +248,14 @@ def do_train(model, dataset_batches, k):
         optimizer.apply_gradients(zip(grads, model.trainable_variables),
                                 global_step=tf.compat.v1.train.get_or_create_global_step())
 
+        save_model(model, f'{saveloc}/{str(batch).zfill(5)}_model.h5')
+        to_json_local(loss_history, f'{saveloc}/{str(batch).zfill(5)}_train_loss_history.json')
+
     return loss_history
+
+def to_json_local(data, loc):
+    with open(loc, 'w') as fd:
+        json.dump(data, fd)
 
 def do_train_noweights(model, dataset_batches):
     optimizer = tf.train.AdamOptimizer()
@@ -430,6 +439,7 @@ def make_data(df, crews={'training': [1],
                                     save_location=f'{save_dir}/test.h5')
     return
 
+'''
     outdata = {
         "x_train": x_train,
         "y_train": reshape_y(encode_class(y_train), 4), # y_train,
@@ -456,20 +466,21 @@ def make_data(df, crews={'training': [1],
         }}
 
     return {**outdata, **metadata}
+'''
 
 
-def runner():
-    print('Start make_data', timestamp())
-    outdata = make_data(df, crews={'training': [1],
-                        'test': [2]},
-              sequence_window=256, percent_of_data=1,
-             feature_cols={'r': simple_scaler})
-
-    validate_data(outdata)
-
-    print('Start bake_model', timestamp())
-    model = bake_model(**outdata, epochs=2)
-    return outdata, model
+#def runner():
+#    print('Start make_data', timestamp())
+#    outdata = make_data(df, crews={'training': [1],
+#                        'test': [2]},
+#              sequence_window=256, percent_of_data=1,
+#             feature_cols={'r': simple_scaler})
+#
+#    validate_data(outdata)
+#
+#    print('Start bake_model', timestamp())
+#    model = bake_model(**outdata, epochs=2)
+#    return outdata, model
 
 def validate_data(data):
     assert len(Counter(data['y_train_original'])) > 1
@@ -604,7 +615,6 @@ def read_h5(source_location, Xdataset, Ydataset):
         X = fd[Xdataset].__array__()
         Y = fd[Ydataset].__array__()
         Ylabels = np.argmax(Y, axis=1)
-        counters_index[i] = dict(Counter(labels))
     return X, Ylabels
 
 def read_h5_two(source_location, Xdataset, Ydataset):
@@ -671,4 +681,12 @@ def get_performance(model, dataloc, dataset_names):
         lossvec.append(loss)
     return lossvec
 
+
+
+def save_model(model, loc):
+    model.save(loc)
+    #with open('2019-05-17T1914UTC-model-3.h5', 'rb') as fd: dumpedmodel = fd.read()
+
+def load_model(loc):
+    return keras.models.load_model(loc)
 
