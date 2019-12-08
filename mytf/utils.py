@@ -150,7 +150,7 @@ def build_dataset_weighty(arrays, target_indices, class_weights,
 def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
         batch_size):
     # Fork of build_dataset_weighty , weights should add up to 1.0 per batch i think.
-    print('Start build v3: .. doesnt add up to 1.0')
+    #print('Start build v3: .. doesnt add up to 1.0')
     indices = deepcopy(target_indices)
     np.random.shuffle(indices)
 
@@ -162,15 +162,19 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
     label_vec = []
 
     for part in partitions:
-        #
         train_vec.append(
                 arrays['x_train'][part, :, :])
 
-        y_train = arrays['y_train'][part, :]
-        class_counts = tf.reduce_sum(y_train, axis=0)
-
-        labels = np.argmax(y_train, axis=1)
-        print(Counter(labels))
+        if 'y_train' in arrays:
+            y_train = arrays['y_train'][part, :]
+            class_counts = tf.reduce_sum(y_train, axis=0)
+            labels = np.argmax(y_train, axis=1)
+        elif 'ylabels_train' in arrays:
+            labels = arrays['ylabels_train'][part]
+            adict = dict(Counter(labels))
+            class_counts = [adict.get(i, 0) for i in [0, 1, 2, 3]]
+            
+        #print(Counter(labels))
         label_vec.append(labels)
 
         weights_per_class = np.array([class_weights[x] for x in range(4)]
@@ -178,9 +182,9 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
         #assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
         #        < 0.0001)
 
-        print('weights_per_class, ', weights_per_class)
+        #print('weights_per_class, ', weights_per_class)
         weights = [class_weights[x] for x in labels]   #
-        print(sum(weights))
+        #print(sum(weights))
         # assert(1.0 - sum(weights) < 0.001)
 
         weights_vec.append(weights)
