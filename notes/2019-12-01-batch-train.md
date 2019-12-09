@@ -1,4 +1,14 @@
 
+#### What
+* One of the issues I tried addressing in this notebook is that building sequences from my data is extremely memory intensive. Here instead, I tried out `h5py` . I re-wrote my data set building to save dataset chunks to a `train.h5` so I could use more feature columns and basically guarantee not to ever run out of memory. That's because model training can be stopped and continued so it is not necessary to keep everything in memory before training.
+* [First loss result](#first-loss-result) after using all the data.
+* However my data is highly imbalanced, so after dumping my data I built a [more uniform dataset](#build-a-more-uniform-dataset)
+* But I [ran out of memory here](#2019-12-08) 
+* So [here](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-08-.md) I continued where I left off.
+
+
+#### Markdownified... 
+* ( markdownified from  `2019-12-01-batch-train.ipynb`  )
 
 ```python
 
@@ -2115,7 +2125,7 @@ for i in tqdm(range(45)): # test is 56
     Wall time: 7min 21s
 
 
-    
+#### First loss result
 
 
 
@@ -2218,6 +2228,8 @@ tf.losses.sparse_softmax_cross_entropy(labels, preds.numpy()).numpy()
 # hmm I might as well save the model itself too so I can batch calculate validation losses too
 ```
 
+
+#### Build a more uniform dataset
 
 ```python
 %%time
@@ -2693,7 +2705,8 @@ for k in [0, 1, 2, 3]:
     Wall time: 21.6 s
 
 
-### 2019-12-08
+
+#### 2019-12-08
 
 
 ```python
