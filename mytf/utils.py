@@ -424,9 +424,9 @@ def make_data(df, crews={'training': [1],
     # Training
     print('Start building training set', quickts())
     traindf = df[df.crew.isin(crews['training'])][what_cols].copy()
-    scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
+    #scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
     train_datasets = get_windows_h5(traindf,
-                                    cols=feat_cols_scaled + ['event'],
+                                    cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
                                     save_location=f'{save_dir}/train.h5')
@@ -434,9 +434,9 @@ def make_data(df, crews={'training': [1],
     # Testing
     print('Start building testing set', quickts())
     testdf = df[df.crew.isin(crews['test'])][what_cols].copy()
-    _, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
+    #_, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
     test_datasets = get_windows_h5(testdf,
-                                    cols=feat_cols_scaled + ['event'],
+                                    cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
                                     save_location=f'{save_dir}/test.h5')
@@ -634,9 +634,10 @@ def transfer_data(source_location,
                  save_location,
                  label,
                  howmany):
+    # Given a source h5 file..
+    # look for a certain amount of examples and transfer them to thew new location.
     Xvec = []
     Ylabelvec = []
-    # look for a certain amount of examples and transfer them to thew new location.
     sofar = 0
     for Xdataset, Ydataset in source_datasets:
 
