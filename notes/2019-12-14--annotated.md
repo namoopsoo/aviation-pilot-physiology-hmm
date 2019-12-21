@@ -1,4 +1,12 @@
 
+#### toc
+* [2019-12-14](#2019-12-14)
+* [plot-four-func](#plot-four-func)
+* [plot-all-histograms](#plot-all-histograms)
+* [another-time-series-look](#another-time-series-look)
+* [more-feature-plots](#more-feature-plots)
+
+
 ### 2019-12-14
 Here I took another look at my training data, `'data/2019-12-07-train-balanced.h5` , in a different way. 
 
