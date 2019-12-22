@@ -333,13 +333,13 @@ decode_class = np.vectorize(lambda x: {0: 'A',
                                       2: 'C',
                                       3: 'D'}.get(x))
 
-def do_scaling(arrays):
-    '''
-    Expecting typical data I've had. apply minmax scaling.
-    '''
-    pass
-
-    scaler = MinMaxScaler(feature_range=(0, 1))
+#def do_scaling(arrays):
+#    '''
+#    Expecting typical data I've had. apply minmax scaling.
+#    '''
+#    pass
+#
+#    scaler = MinMaxScaler(feature_range=(0, 1))
 
 
 def scale_this_thing(x, scaler):
@@ -416,8 +416,8 @@ def make_data(df, crews={'training': [1],
     sort_cols = ['crew', 'seat', 'experiment', 'time']
     target_col = 'event'
 
-    feat_cols_scaled = [
-            x + '_scaled' for x in feature_cols]
+    #feat_cols_scaled = [
+    #        x + '_scaled' for x in feature_cols]
 
     what_cols = sort_cols + feature_cols + [target_col]
 
@@ -685,6 +685,7 @@ def transfer_data(source_location,
 
 
 def save_that(save_location, name, X):
+    # NOTE: Unhandled: RuntimeError: Unable to create link (name already exists)
     with h5py.File(save_location, "a") as f:
         f.create_dataset(name, data=np.array(X, dtype=float))
 
@@ -703,12 +704,25 @@ def get_performance(model, dataloc, dataset_names):
         lossvec.append(loss)
     return lossvec
 
-
-
 def save_model(model, loc):
     model.save(loc)
     #with open('2019-05-17T1914UTC-model-3.h5', 'rb') as fd: dumpedmodel = fd.read()
 
 def load_model(loc):
     return keras.models.load_model(loc)
+
+def count_data_in_location(loc, datasets):
+    '''Count labels across datasets in this h5 file.'''
+    counters_index = {}
+    for i, name in tqdm(enumerate(datasets)):
+        with h5py.File(loc, 'r+') as fd:
+            Y = fd[name].__array__()
+            labels = np.argmax(Y, axis=1)
+            counters_index[i] = dict(Counter(labels))
+
+    total_counts = {k: [x.get(k) for x in counters_index.values() 
+                        if x.get(k) is not None]
+                   for k in [0, 1, 2, 3]}
+    total_label_sums = {k: sum(total_counts[k]) for k in [0, 1, 2, 3]}
+    return total_label_sums
 
