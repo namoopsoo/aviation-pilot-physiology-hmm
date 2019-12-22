@@ -628,7 +628,25 @@ def read_h5_two(source_location, Xdataset, Ydataset):
         #counters_index[i] = dict(Counter(labels))
     return X, Y
         
-    
+
+def read_h5_raw(source_location, name):
+    with h5py.File(source_location, 'r+') as fd:
+        return fd[name].__array__()
+
+
+def h5_keys(loc):
+    with h5py.File(loc, 'r+') as fd:
+        return list(fd.keys())
+
+def transfer(source_location,
+             source_datasets,
+             save_location):
+    for name in source_datasets:
+        A = read_h5_raw(source_location, name)
+        save_that(save_location,
+             name, A)
+
+
 def transfer_data(source_location,
                   source_datasets,
                  save_location,
