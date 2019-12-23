@@ -355,10 +355,10 @@ def get_partitions(vec, slice_size):
     assert slice_size > 0
     #assert isinstance(vec, list)
     num_slices = int(math.floor(len(vec)/slice_size))
-    print('num slices', num_slices)
+    #print('num slices', num_slices)
     size_remainder = len(vec) - num_slices*slice_size
     assert size_remainder >= 0
-    print('size_remainder, ', size_remainder)
+    #print('size_remainder, ', size_remainder)
     slices = [vec[k*slice_size:k*slice_size+slice_size] for k in range(num_slices)]
     if size_remainder:
         slices.append(vec[-(size_remainder):])
