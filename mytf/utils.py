@@ -33,7 +33,7 @@ def quickts():
 def convert_nans(y):
     return np.vectorize(lambda x: 0 if np.isnan(x) else x)(y)
 
-def tf_f1_score(y_true, y_pred, method=None):
+def tf_f1_score(y_true, y_pred):
     """Computes 3 different f1 scores, micro macro
     weighted.
     micro: f1 score accross the classes, as 1
@@ -174,18 +174,18 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
 
         if 'y_train' in arrays:
             y_train = arrays['y_train'][part, :]
-            class_counts = tf.reduce_sum(y_train, axis=0)
+            # class_counts = tf.reduce_sum(y_train, axis=0)
             labels = np.argmax(y_train, axis=1)
         elif 'ylabels_train' in arrays:
             labels = arrays['ylabels_train'][part]
             adict = dict(Counter(labels))
-            class_counts = [adict.get(i, 0) for i in [0, 1, 2, 3]]
+            # class_counts = [adict.get(i, 0) for i in [0, 1, 2, 3]]
             
         #print(Counter(labels))
         label_vec.append(labels)
 
-        weights_per_class = np.array([class_weights[x] for x in range(4)]
-                )/class_counts
+        #weights_per_class = np.array([class_weights[x] for x in range(4)]
+        #        )/class_counts
         #assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
         #        < 0.0001)
 
@@ -284,32 +284,32 @@ def do_train_noweights(model, dataset_batches):
 
 
 
-def do_train_f1_loss(model, dataset_batches):
-    optimizer = tf.train.AdamOptimizer()
-
-    loss_history = []
-
-    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(1000)):
-
-        with tf.GradientTape() as tape:
-            logits = model(invec, training=True)
-
-            original_loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
-
-            micro, macro, weighted, f1 = tf_f1_score(
-                    one_hot(labels, convert=True),
-                    one_hot(np.argmax(logits, axis=1), convert=False),
-
-                    )
-            loss_value = macro
-
-
-        loss_history.append(loss_value.numpy())
-        grads = tape.gradient(loss_value, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.compat.v1.train.get_or_create_global_step())
-
-    return loss_history
+#def do_train_f1_loss(model, dataset_batches):
+#    optimizer = tf.train.AdamOptimizer()
+#
+#    loss_history = []
+#
+#    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(1000)):
+#
+#        with tf.GradientTape() as tape:
+#            logits = model(invec, training=True)
+#
+#            original_loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
+#
+#            micro, macro, weighted, f1 = tf_f1_score(
+#                    one_hot(labels, convert=True),
+#                    one_hot(np.argmax(logits, axis=1), convert=False),
+#
+#                    )
+#            loss_value = macro
+#
+#
+#        loss_history.append(loss_value.numpy())
+#        grads = tape.gradient(loss_value, model.trainable_variables)
+#        optimizer.apply_gradients(zip(grads, model.trainable_variables),
+#                                global_step=tf.compat.v1.train.get_or_create_global_step())
+#
+#    return loss_history
 
 def one_hot(vec, convert=False):
     foo = {0: [1, 0, 0, 0],
@@ -354,7 +354,7 @@ def scale_this_thing(x, scaler):
 
 
 
-def get_partitions(vec, slice_size):
+def get_partitions(vec, slice_size, keep_remainder=True):
     assert slice_size > 0
     #assert isinstance(vec, list)
     num_slices = int(math.floor(len(vec)/slice_size))
@@ -363,7 +363,7 @@ def get_partitions(vec, slice_size):
     assert size_remainder >= 0
     #print('size_remainder, ', size_remainder)
     slices = [vec[k*slice_size:k*slice_size+slice_size] for k in range(num_slices)]
-    if size_remainder:
+    if size_remainder and keep_remainder:
         slices.append(vec[-(size_remainder):])
 
     return slices
@@ -428,7 +428,7 @@ def make_data(df, crews={'training': [1],
     print('Start building training set', quickts())
     traindf = df[df.crew.isin(crews['training'])][what_cols].copy()
     #scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
-    train_datasets = get_windows_h5(traindf,
+    _ = get_windows_h5(traindf,
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
@@ -438,7 +438,7 @@ def make_data(df, crews={'training': [1],
     print('Start building testing set', quickts())
     testdf = df[df.crew.isin(crews['test'])][what_cols].copy()
     #_, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
-    test_datasets = get_windows_h5(testdf,
+    _ = get_windows_h5(testdf,
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,

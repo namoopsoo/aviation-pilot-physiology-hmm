@@ -14,7 +14,7 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
     for Xdataset, Ydataset in dataset_names:
 
         X, Ylabels = mu.read_h5_two(dataloc, Xdataset, Ydataset) 
-        parts = mu.get_partitions(range(X.shape[0]), batch_size)
+        parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
         batchlosses = []
         for part in parts:
             preds = model(X[part].astype('float32'))
