@@ -50,7 +50,8 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
                                   ['X_1', 'Ylabels_1'],
                                   ['X_2', 'Ylabels_2'],
                                   ['X_3', 'Ylabels_3']],
-                    eager=eager)
+                    eager=eager,
+                    batch_size=batch_size)
 
 def json_save(x, loc):
     with open(loc, 'w') as fd:
