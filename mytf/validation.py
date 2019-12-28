@@ -1,19 +1,20 @@
 import json
 import numpy as np
 import tensorflow as tf
-from tqdm import tqdm
 
 import mytf.utils as mu
 
 
-def get_performance_parts(model, dataloc, dataset_names, eager):
+def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None):
     # 
     # dataloc contains the test data..
+    if batch_size is None:
+        batch_size = 100
     lossvec = []
     for Xdataset, Ydataset in dataset_names:
 
         X, Ylabels = mu.read_h5_two(dataloc, Xdataset, Ydataset) 
-        parts = mu.get_partitions(range(X.shape[0]), 100)
+        parts = mu.get_partitions(range(X.shape[0]), batch_size)
         batchlosses = []
         for part in parts:
             preds = model(X[part].astype('float32'))

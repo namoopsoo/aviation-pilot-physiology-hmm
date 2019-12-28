@@ -1,4 +1,3 @@
-import tensorflow as tf
 import json
 import datetime
 import itertools
@@ -14,8 +13,12 @@ from tqdm import tqdm
 
 from collections import Counter
 
-from sklearn.preprocessing import MinMaxScaler
+#from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+
+import tensorflow as tf
+from tf.compat.v1.losses import sparse_softmax_cross_entropy
+# The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use 
 
 ALL_FEATURE_COLS = ['eeg_fp1', 'eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', 'eeg_t5', 'eeg_t3', 'eeg_fp2', 'eeg_o1', 'eeg_p3', 'eeg_pz', 'eeg_f3', 'eeg_fz', 'eeg_f4', 'eeg_c4', 'eeg_p4', 'eeg_poz', 'eeg_c3', 'eeg_cz', 'eeg_o2', 'ecg', 'r', 'gsr',]
 
@@ -243,7 +246,7 @@ def do_train(model, dataset_batches, k, saveloc):
 
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
-            loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits, weights=weights)
+            loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
 
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
@@ -269,7 +272,7 @@ def do_train_noweights(model, dataset_batches):
 
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
-            loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+            loss_value = sparse_softmax_cross_entropy(labels, logits)
 
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
@@ -291,7 +294,7 @@ def do_train_f1_loss(model, dataset_batches):
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
 
-            original_loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits, weights=weights)
+            original_loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
 
             micro, macro, weighted, f1 = tf_f1_score(
                     one_hot(labels, convert=True),
@@ -440,7 +443,7 @@ def make_data(df, crews={'training': [1],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
                                     save_location=f'{save_dir}/test.h5')
-    return
+
 
 '''
     outdata = {
@@ -698,8 +701,9 @@ def get_performance(model, dataloc, dataset_names):
         X, Ylabels = read_h5_two(dataloc, Xdataset, Ydataset) 
     
         preds = model(X.astype('float32'))
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=Ylabels.astype('int64'),
+        loss = sparse_softmax_cross_entropy(labels=Ylabels.astype('int64'),
                                                logits=preds.numpy()).numpy()
+
 
         lossvec.append(loss)
     return lossvec
