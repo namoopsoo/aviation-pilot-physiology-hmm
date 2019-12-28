@@ -35,8 +35,12 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
     return lossvec
 
 
-def perf_wrapper(modelloc, dataloc, eager):
+def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
     # dataloc: h5 location for test data
+
+    if batch_size is None:
+        batch_size = 100
+
     model = mu.load_model(modelloc)
 
     return get_performance_parts(
