@@ -237,25 +237,29 @@ def shrink_dataset_subset(arrays, train_target_indices,
             }
 
 
-def do_train(model, dataset_batches, k, saveloc):
-    optimizer = tf.train.AdamOptimizer()
+def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
+    optimizer = tf.train.AdamOptimizer(**optimizer_params)
 
     loss_history = []
 
-    for (batch, (invec, labels, weights)) in tqdm(enumerate(dataset_batches.take(k))):
+    for epoch in range(epochs):
 
-        with tf.GradientTape() as tape:
-            logits = model(invec, training=True)
-            loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
+        for (batch, (invec, labels, weights)) in tqdm(enumerate(dataset_batches.take(k))):
 
-        loss_history.append(loss_value.numpy())
-        grads = tape.gradient(loss_value, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.compat.v1.train.get_or_create_global_step())
+            with tf.GradientTape() as tape:
+                logits = model(invec, training=True)
+                loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
 
-        save_model(model, f'{saveloc}/{str(batch).zfill(5)}_model.h5')
-        to_json_local([float(x) for x in loss_history],
-                f'{saveloc}/{str(batch).zfill(5)}_train_loss_history.json')
+            loss_history.append(loss_value.numpy())
+            grads = tape.gradient(loss_value, model.trainable_variables)
+            optimizer.apply_gradients(zip(grads, model.trainable_variables),
+                                    global_step=tf.compat.v1.train.get_or_create_global_step())
+
+            prefix = (f'{saveloc}/epoch_{str(epoch).zfill(3)}'
+                               f'_batch_{str(batch).zfill(5)}')
+            save_model(model, (f'{prefix}_model.h5'))
+            to_json_local([float(x) for x in loss_history],
+                    f'{prefix}_train_loss_history.json')
 
     return loss_history
 
