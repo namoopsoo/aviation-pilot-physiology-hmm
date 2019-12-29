@@ -257,9 +257,12 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
 
             prefix = (f'{saveloc}/epoch_{str(epoch).zfill(3)}'
                                f'_batch_{str(batch).zfill(5)}')
-            save_model(model, (f'{prefix}_model.h5'))
-            to_json_local([float(x) for x in loss_history],
-                    f'{prefix}_train_loss_history.json')
+
+            if batch % 10 == 0:
+                save_model(model, (f'{prefix}_model.h5'))
+
+                to_json_local([float(x) for x in loss_history],
+                            f'{prefix}_train_loss_history.json')
 
     return loss_history
 
