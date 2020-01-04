@@ -17,8 +17,13 @@ from collections import Counter
 from sklearn.preprocessing import StandardScaler
 
 import tensorflow as tf
-from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
+
+# tf.train.AdamOptimizer is deprecated. Please use tf.compat.v1.train.AdamOptimizer instead.
 # The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use 
+from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
+from tensorflow.compat.v1.train import AdamOptimizer
+
+
 
 ALL_FEATURE_COLS = ['eeg_fp1', 'eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', 'eeg_t5', 'eeg_t3', 'eeg_fp2', 'eeg_o1', 'eeg_p3', 'eeg_pz', 'eeg_f3', 'eeg_fz', 'eeg_f4', 'eeg_c4', 'eeg_p4', 'eeg_poz', 'eeg_c3', 'eeg_cz', 'eeg_o2', 'ecg', 'r', 'gsr',]
 
@@ -238,7 +243,7 @@ def shrink_dataset_subset(arrays, train_target_indices,
 
 
 def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
-    optimizer = tf.train.AdamOptimizer(**optimizer_params)
+    optimizer = AdamOptimizer(**optimizer_params)
 
     loss_history = []
 
@@ -271,7 +276,7 @@ def to_json_local(data, loc):
         json.dump(data, fd)
 
 def do_train_noweights(model, dataset_batches):
-    optimizer = tf.train.AdamOptimizer()
+    optimizer = AdamOptimizer()
 
     loss_history = []
 
@@ -292,7 +297,7 @@ def do_train_noweights(model, dataset_batches):
 
 
 #def do_train_f1_loss(model, dataset_batches):
-#    optimizer = tf.train.AdamOptimizer()
+#    optimizer = AdamOptimizer()
 #
 #    loss_history = []
 #
