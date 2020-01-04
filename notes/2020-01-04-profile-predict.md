@@ -1,7 +1,11 @@
 #### Summary
 * My predict , which I've been using for plotting batch validation loss now, is really slow, so I figure I would just run `kernprofile` on it...
-* So using my commit `f09236c` , I ran the following on my sagemaker notebook instance terminal 
+* So using my commit `f09236c` , I ran the [following](#line-profiling) on my sagemaker notebook instance terminal 
 * This was on an arbitrarily one of the last models I had..
+* And heh looking at the [below](#line-profiling), the file access parts are nothing. Only the `model()` predict part was expensive.
+* Wondering 
+
+#### line profiling
 ```python
 (tensorflow_p36) $ kernprof -v -l predict.py --test-loc history/2019-12-22T174803Z/test_balanced.h5 --batch-size 32 --model-loc history/2019-12-29T000509Z/epoch_000_batch_00030_model.h5   --work-dir history/2020-01-04T1945Z
 {'verbose': False, 'dry_run': False, 'model_loc': 'history/2019-12-29T000509Z/epoch_000_batch_00030_model.h5', 'test_loc': 'history/2019-12-22T174803Z/test_balanced.h5', 'batch_size': '32', 'work_dir': 'history/2020-01-04T1945Z'}
@@ -86,4 +90,5 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     58         1  996930019.0 996930019.0     99.9                      batch_size=batch_size)
 
 ```
+
 
