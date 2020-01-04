@@ -2,7 +2,10 @@ import json
 import numpy as np
 import tensorflow as tf
 
+from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
+
 import mytf.utils as mu
+
 
 
 def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None):
@@ -20,12 +23,12 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
             preds = model(X[part].astype('float32'))
             
             if eager:
-                tensor = tf.losses.sparse_softmax_cross_entropy(
+                tensor = sparse_softmax_cross_entropy(
                         labels=Ylabels[part].astype('int64'),
                         logits=preds.numpy())
                 loss = tensor.numpy()
             else:
-                tensor = tf.losses.sparse_softmax_cross_entropy(
+                tensor = sparse_softmax_cross_entropy(
                         labels=Ylabels[part].astype('int64'),
                         logits=preds)
                 loss = tensor.eval()
@@ -55,6 +58,24 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
 
 def json_save(x, loc):
     with open(loc, 'w') as fd:
-        json.dump(x, fd)
+        json.dump(x, fd, cls=JSONCustomEncoder)
+
+class JSONCustomEncoder(json.JSONEncoder):
+
+    def default(self, object):
+
+        if isinstance(object, np.float32):
+
+            return float(object)
+
+        else:
+
+            # call base class implementation which takes care of
+
+            # raising exceptions for unsupported types
+
+            return json.JSONEncoder.default(self, object)
+
+ 
 
 
