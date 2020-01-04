@@ -14,7 +14,6 @@ import mytf.validation as mv
 #tf.enable_eager_execution()
 tf.compat.v1.enable_eager_execution()
 
-@profile
 def bake_options():
     return [
             [['--verbose', '-v'],
@@ -44,7 +43,6 @@ def bake_options():
                 #'required': False
                 ]
 
-@profile
 def do_predict(kwargs):
     modelloc = kwargs['model_loc']
     workdir = kwargs['work_dir']
@@ -56,7 +54,7 @@ def do_predict(kwargs):
     steploss = mv.perf_wrapper(modelloc,
             dataloc=test_loc,
             eager=True,
-            batch_size=kwargs['batch_size'])
+            batch_size=int(kwargs['batch_size']))
 
     # Save this ...
 
