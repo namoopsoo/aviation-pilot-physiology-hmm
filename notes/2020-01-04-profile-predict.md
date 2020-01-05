@@ -115,4 +115,12 @@ sys     0m2.203s
 * Starts off with < `20%` memory . Going to see what happens fingers crossed.
 * at `26minutes` and `80%` memory, my sagemaker notebook is basically unreachable. 
 * So was taking way too long and probably crashed the instance.
+* ok indeed got killed
+```
+Killed
+
+real    29m17.753s
+user    26m21.482s
+sys     0m6.375s
+```
 
