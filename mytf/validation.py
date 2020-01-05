@@ -28,13 +28,15 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
                         logits=preds.numpy())
                 loss = tensor.numpy()
             else:
-                tensor = sparse_softmax_cross_entropy(
+                loss = sparse_softmax_cross_entropy(
                         labels=Ylabels[part].astype('int64'),
                         logits=preds)
-                loss = tensor.eval()
+                #loss = tensor.eval()
             batchlosses.append(loss)
-
-        lossvec.append(np.mean(batchlosses))
+        if eager:
+            lossvec.append(np.mean(batchlosses))
+        else:
+            lossvec.append(tf.math.reduce_mean(batchlosses))
     return lossvec
 
 

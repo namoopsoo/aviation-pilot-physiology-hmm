@@ -2,17 +2,15 @@ import sys
 import numpy as np
 import argparse
 import os
-import h5py
 import json
 import tensorflow as tf
-from tensorflow import keras
 
 import mytf.utils as mu
 import mytf.validation as mv
 
 # Need this for now..
 #tf.enable_eager_execution()
-tf.compat.v1.enable_eager_execution()
+#tf.compat.v1.enable_eager_execution()
 
 def bake_options():
     return [
@@ -51,14 +49,20 @@ def do_predict(kwargs):
         print(kwargs)
         sys.exit()
 
-    steploss = mv.perf_wrapper(modelloc,
-            dataloc=test_loc,
-            eager=True,
-            batch_size=int(kwargs['batch_size']))
+
+    with tf.compat.v1.Session() as sess:
+        # tensor = foo()
+        # Evaluate the tensor `c`.
+        lossvec = mv.perf_wrapper(modelloc,
+                dataloc=test_loc,
+                eager=False,
+                batch_size=int(kwargs['batch_size']))
+
+        steplosses = [sess.run(tensor) for tensor in lossvec]
 
     # Save this ...
 
-    mv.json_save({'steploss': steploss}, 
+    mv.json_save({'steploss': steplosses}, 
                   f'{workdir}/{mu.quickts()}.json')
     
     print('Done.')
