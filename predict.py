@@ -65,7 +65,7 @@ def do_predict(kwargs):
 def graph_predict(kwargs):
     modelloc = kwargs['model_loc']
     test_loc = kwargs['test_loc']
-    batch_size = kwargs['batch_size'] or 100
+    batch_size = int(kwargs['batch_size']) or 100
 
     with tf.compat.v1.Session() as sess:
         steplosses = []
