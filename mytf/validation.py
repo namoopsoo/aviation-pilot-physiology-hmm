@@ -7,9 +7,38 @@ from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
 import mytf.utils as mu
 
 
+def get_performance(model, dataloc, Xdataset, Ydataset, eager, batch_size=None):
+    # Fork of get_performance_parts, since I realized graph execution
+    # needed more frequent evaluation b/c Memory filling up.
+    # dataloc contains the test data..
+    if batch_size is None:
+        batch_size = 100
+    #
+    X, Ylabels = mu.read_h5_two(dataloc, Xdataset, Ydataset) 
+    parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
+    batchlosses = []
+    for part in parts:
+        preds = model(X[part].astype('float32'))
+        
+        if eager:
+            tensor = sparse_softmax_cross_entropy(
+                    labels=Ylabels[part].astype('int64'),
+                    logits=preds.numpy())
+            loss = tensor.numpy()
+        else:
+            loss = sparse_softmax_cross_entropy(
+                    labels=Ylabels[part].astype('int64'),
+                    logits=preds)
+            #loss = tensor.eval()
+        batchlosses.append(loss)
+
+    if eager:
+        return np.mean(batchlosses)
+    else:
+        return tf.math.reduce_mean(batchlosses)
+
 
 def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None):
-    # 
     # dataloc contains the test data..
     if batch_size is None:
         batch_size = 100

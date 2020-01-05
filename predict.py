@@ -9,8 +9,6 @@ import mytf.utils as mu
 import mytf.validation as mv
 
 # Need this for now..
-#tf.enable_eager_execution()
-#tf.compat.v1.enable_eager_execution()
 
 def bake_options():
     return [
@@ -19,6 +17,9 @@ def bake_options():
                     'help': 'pass to to be verbose with commands'},
                 ],
             [['--dry-run', '-d'],
+                {'action': 'store_true',
+                    'help': 'Dry run. Just print the command.  '},],
+            [['--eager', '-e'],
                 {'action': 'store_true',
                     'help': 'Dry run. Just print the command.  '},],
 
@@ -42,30 +43,58 @@ def bake_options():
                 ]
 
 def do_predict(kwargs):
-    modelloc = kwargs['model_loc']
-    workdir = kwargs['work_dir']
-    test_loc = kwargs['test_loc']
     if kwargs['dry_run']:
         print(kwargs)
         sys.exit()
 
-
-    with tf.compat.v1.Session() as sess:
-        # tensor = foo()
-        # Evaluate the tensor `c`.
-        lossvec = mv.perf_wrapper(modelloc,
-                dataloc=test_loc,
-                eager=False,
-                batch_size=int(kwargs['batch_size']))
-
-        steplosses = [sess.run(tensor) for tensor in lossvec]
+    if kwargs['eager']:
+        tf.compat.v1.enable_eager_execution()
+        steplosses = eager_predict(kwargs)
+    else:
+        steplosses = graph_predict(kwargs)
 
     # Save this ...
-
+    workdir = kwargs['work_dir']
     mv.json_save({'steploss': steplosses}, 
                   f'{workdir}/{mu.quickts()}.json')
     
     print('Done.')
+
+def graph_predict(kwargs):
+    modelloc = kwargs['model_loc']
+    test_loc = kwargs['test_loc']
+
+    with tf.compat.v1.Session() as sess:
+        steplosses = []
+        model = mu.load_model(modelloc)
+        for (Xdataset, Ydataset) in [['X_0', 'Ylabels_0'],
+                                    ['X_1', 'Ylabels_1'],
+                                    ['X_2', 'Ylabels_2'],
+                                    ['X_3', 'Ylabels_3']]:
+            tensor = mv.get_performance(
+                    model, test_loc, Xdataset, Ydataset,
+                    eager=False,
+                    batch_size=int(kwargs['batch_size']))
+
+            steplosses.append(sess.run(tensor))
+
+    return steplosses
+
+
+def eager_predict(kwargs):
+    modelloc = kwargs['model_loc']
+    test_loc = kwargs['test_loc']
+
+
+    # tensor = foo()
+    # Evaluate the tensor `c`.
+    steplosses = mv.perf_wrapper(modelloc,
+            dataloc=test_loc,
+            eager=True,
+            batch_size=int(kwargs['batch_size']))
+
+    return steplosses
+
 
 def do():
     parser = argparse.ArgumentParser()
