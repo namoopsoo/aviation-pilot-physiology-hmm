@@ -60,9 +60,12 @@ def do_predict(kwargs):
     
     print('Done.')
 
+
+@profile
 def graph_predict(kwargs):
     modelloc = kwargs['model_loc']
     test_loc = kwargs['test_loc']
+    batch_size = kwargs['batch_size'] or 100
 
     with tf.compat.v1.Session() as sess:
         steplosses = []
@@ -71,12 +74,17 @@ def graph_predict(kwargs):
                                     ['X_1', 'Ylabels_1'],
                                     ['X_2', 'Ylabels_2'],
                                     ['X_3', 'Ylabels_3']]:
-            tensor = mv.get_performance(
-                    model, test_loc, Xdataset, Ydataset,
-                    eager=False,
-                    batch_size=int(kwargs['batch_size']))
+            #
+            X, Ylabels = mu.read_h5_two(test_loc, Xdataset, Ydataset) 
+            parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
+            batchlosses = []
+            for part in parts:
+                tensor = mv.get_performance_noteager(
+                        model, X=X, Ylabels=Ylabels,
+                        part=part)
+                batchlosses.append(sess.run(tensor))
 
-            steplosses.append(sess.run(tensor))
+            steplosses.append(np.mean(batchlosses))
 
     return steplosses
 
