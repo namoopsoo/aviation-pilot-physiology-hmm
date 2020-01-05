@@ -92,3 +92,24 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ```
 
 
+### 2020-01-05
+
+#### Attempting to do a graph mode predict.. see if its faster
+* I tried yesterday too but it kept blowing up memory even killing the entire sagemaker notebook instance
+* New commit : `96d2ba8` ... 
+```python
+time kernprof -v -l predict.py --test-loc history/2019-12-22T174803Z/test_balanced.h5 \
+        --batch-size 32 --model-loc history/2019-12-29T000509Z/epoch_000_batch_00030_model.h5 \
+        --work-dir history/2020-01-05T19
+...
+...
+Killed
+
+real    2m26.113s
+user    2m17.270s
+sys     0m2.203s
+```
+* hahaha ok it was Killed . I believe I saw memory nearing high 90% with `top`.
+
+#### Trying again witih commit `937a3a7`
+* Starts off with < `20%` memory . Going to see what happens fingers crossed.
