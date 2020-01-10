@@ -6,7 +6,6 @@ from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
 
 import mytf.utils as mu
 
-@profile
 def get_performance_noteager(model, X, Ylabels, part):
     # Fork of get_performance_parts, since I realized graph execution
     # needed more frequent evaluation b/c Memory filling up.

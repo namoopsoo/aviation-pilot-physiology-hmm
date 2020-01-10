@@ -61,7 +61,6 @@ def do_predict(kwargs):
     print('Done.')
 
 
-@profile
 def graph_predict(kwargs):
     modelloc = kwargs['model_loc']
     test_loc = kwargs['test_loc']
