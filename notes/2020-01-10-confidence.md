@@ -1,4 +1,12 @@
+#### Summary
+* Here, just took an immature model from earlier sessions and my balanced test data sets, and plotted all the logits as I had started doing [here earlier](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-01-loglossbook--update.md)
+* This feels like another way, other than logloss, for measuring model learning progress. It is way more expressive than logloss.
+* I have a feeling my logloss calculation is not properly helping to steer the back prop properly. Not sure yet. 
+* Maybe if the logloss calculation is better than this raw logit plotting will no longer be necessary
+* [final plot](#final-plot)
 
+
+#### Blah
 
 ```python
 
@@ -202,7 +210,7 @@ print(f'using detail["model_loc"]')
 
     using detail["model_loc"]
 
-
+#### Final plot
 
 ![png](2020-01-10-confidence_files/2020-01-10-confidence_6_1.png)
 
