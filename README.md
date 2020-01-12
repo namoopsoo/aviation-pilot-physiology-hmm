@@ -15,3 +15,5 @@ A look at this physiological data kaggle from [earlier this year](https://www.ka
 
 - [Test driving TensorBoard](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-08-10-c-again.ipynb), which required a much different train loop that stores ouputs from the logits across the training epochs. Very cool.
 - [Using h5py](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-01-batch-train.md) for data now [and plotting my logloss per class](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-08-.md) .
+- [Really nice MinMaxScaler partial fit approach](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-21--update.md)
+
