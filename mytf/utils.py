@@ -241,19 +241,47 @@ def shrink_dataset_subset(arrays, train_target_indices,
             #'y_test_original': arrays['y_test_original'][test_target_indices],
             }
 
+def weights_for_losses(losses):
+    weights = tf.keras.backend.softmax(
+            losses,
+            axis=-1)
+    return {k: weights[k] for k in range(4)}
+
+    
+
 
 def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
     optimizer = AdamOptimizer(**optimizer_params)
 
     loss_history = []
 
+    #weights = tf.constant(np.ones((32, 1)))
+    weights_dict = {0: 1., 1: 1., 2: 1., 3:1.}
     for epoch in range(epochs):
 
-        for (batch, (invec, labels, weights)) in enumerate(tqdm(dataset_batches.take(k))):
+        for (batch, (invec, labels, _)) in enumerate(tqdm(dataset_batches.take(k))):
+            weights = [weights_dict[labels[i]] for i in range(32)]
 
+
+            # NOTE: is this tape in the right place?
             with tf.GradientTape() as tape:
                 logits = model(invec, training=True)
                 loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
+                losses = [
+                        sparse_softmax_cross_entropy(labels[indices],
+                            logits[indices],
+                            weights=weights)
+
+                        for indices in [
+                            [
+                                i for i in range(32)
+                                if labels[i].numpy() == label
+                                ]
+                            for label in [0, 1, 2, 3]
+                            ]
+                        ]
+                weights_dict = weights_for_losses(losses)
+                #loss_value = np.mean() 
 
             loss_history.append(loss_value.numpy())
             grads = tape.gradient(loss_value, model.trainable_variables)
