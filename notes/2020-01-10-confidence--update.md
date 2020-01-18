@@ -559,7 +559,7 @@ lossvec, predsvec =  ipdb.runcall(get_raw_preds,
 
     TypeError: 'NoneType' object is not iterable
 
-
+#### Play with sparse_softmax_cross_entropy a little here
 
 ```python
 # print(lossvec)
