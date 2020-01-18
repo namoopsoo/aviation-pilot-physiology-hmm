@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from collections import Counter
 
-#from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 
 import tensorflow as tf
@@ -249,7 +249,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
 
     for epoch in range(epochs):
 
-        for (batch, (invec, labels, weights)) in tqdm(enumerate(dataset_batches.take(k))):
+        for (batch, (invec, labels, weights)) in enumerate(tqdm(dataset_batches.take(k))):
 
             with tf.GradientTape() as tape:
                 logits = model(invec, training=True)
@@ -741,4 +741,22 @@ def count_data_in_location(loc, datasets):
                    for k in [0, 1, 2, 3]}
     total_label_sums = {k: sum(total_counts[k]) for k in [0, 1, 2, 3]}
     return total_label_sums
+
+
+
+
+def build_scaler_from_h5(loc, datasets, feature):
+    # one label at a time here..
+    scaler = MinMaxScaler()
+    params_vec = []
+    for name in tqdm(datasets):
+        X = read_h5_raw(loc, name)
+        fullsize = X.shape[0]*X.shape[1]
+        scaler.partial_fit(
+            np.reshape(X[:, :, feature].ravel(),
+                       (fullsize, 1)))
+        params_vec.append(
+            [scaler.data_min_[0], scaler.data_max_[0]])
+
+    return scaler, params_vec
 
