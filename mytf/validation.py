@@ -66,26 +66,3 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
                     eager=eager,
                     batch_size=batch_size)
 
-def json_save(x, loc):
-    with open(loc, 'w') as fd:
-        json.dump(x, fd, cls=JSONCustomEncoder)
-
-class JSONCustomEncoder(json.JSONEncoder):
-
-    def default(self, object):
-
-        if isinstance(object, np.float32):
-
-            return float(object)
-
-        else:
-
-            # call base class implementation which takes care of
-
-            # raising exceptions for unsupported types
-
-            return json.JSONEncoder.default(self, object)
-
- 
-
-

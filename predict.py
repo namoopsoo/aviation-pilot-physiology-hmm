@@ -55,7 +55,7 @@ def do_predict(kwargs):
 
     # Save this ...
     workdir = kwargs['work_dir']
-    mv.json_save({'steploss': steplosses}, 
+    mu.to_json_local({'steploss': steplosses}, 
                   f'{workdir}/{mu.quickts()}.json')
     
     print('Done.')

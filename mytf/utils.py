@@ -254,6 +254,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
     optimizer = AdamOptimizer(**optimizer_params)
 
     loss_history = []
+    label_losses_history = []
 
     #weights = tf.constant(np.ones((32, 1)))
     weights_dict = {0: 1., 1: 1., 2: 1., 3:1.}
@@ -281,9 +282,9 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
                             ]
                         ]
                 weights_dict = weights_for_losses(losses)
-                #loss_value = np.mean() 
 
             loss_history.append(loss_value.numpy())
+            label_losses_history.append(losses)
             grads = tape.gradient(loss_value, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables),
                                     global_step=tf.compat.v1.train.get_or_create_global_step())
@@ -294,14 +295,14 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
             if batch % 10 == 0:
                 save_model(model, (f'{prefix}_model.h5'))
 
-                to_json_local([float(x) for x in loss_history],
+                to_json_local(loss_history,
                             f'{prefix}_train_loss_history.json')
+
+                to_json_local(label_losses_history,
+                            f'{prefix}_train_label_losses_history.json')
 
     return loss_history
 
-def to_json_local(data, loc):
-    with open(loc, 'w') as fd:
-        json.dump(data, fd)
 
 def do_train_noweights(model, dataset_batches):
     optimizer = AdamOptimizer()
@@ -787,4 +788,19 @@ def build_scaler_from_h5(loc, datasets, feature):
             [scaler.data_min_[0], scaler.data_max_[0]])
 
     return scaler, params_vec
+
+
+def to_json_local(data, loc):
+    with open(loc, 'w') as fd:
+        json.dump(data, fd, cls=JSONCustomEncoder)
+
+
+class JSONCustomEncoder(json.JSONEncoder):
+    def default(self, object):
+        if isinstance(object, np.float32):
+            return float(object)
+        else:
+            # call base class implementation which takes care of
+            # raising exceptions for unsupported types
+            return json.JSONEncoder.default(self, object)
 
