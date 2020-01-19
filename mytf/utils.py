@@ -274,7 +274,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
 
                 losses = [
                         sparse_softmax_cross_entropy(labels.numpy()[indices],
-                            logits[indices],
+                            logits.numpy()[indices],
                             weights=weights[indices])
 
                         for indices in indices_vec
