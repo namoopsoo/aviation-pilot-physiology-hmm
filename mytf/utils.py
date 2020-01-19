@@ -261,7 +261,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
     for epoch in range(epochs):
 
         for (batch, (invec, labels, _)) in enumerate(tqdm(dataset_batches.take(k))):
-            weights = [weights_dict[labels[i].numpy()] for i in range(32)]
+            weights = np.array([weights_dict[labels[i].numpy()] for i in range(32)])
 
 
             # NOTE: is this tape in the right place?
@@ -271,7 +271,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
                 losses = [
                         sparse_softmax_cross_entropy(labels.numpy()[indices],
                             logits[indices],
-                            weights=weights)
+                            weights=weights[indices])
 
                         for indices in [ [ i for i in range(32) if labels[i].numpy() == label ] for label in [0, 1, 2, 3] ]
                         ]
