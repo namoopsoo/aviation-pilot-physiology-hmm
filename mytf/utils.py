@@ -269,17 +269,11 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
                 logits = model(invec, training=True)
                 loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
                 losses = [
-                        sparse_softmax_cross_entropy(labels[indices],
+                        sparse_softmax_cross_entropy(labels.numpy()[indices],
                             logits[indices],
                             weights=weights)
 
-                        for indices in [
-                            [
-                                i for i in range(32)
-                                if labels[i].numpy() == label
-                                ]
-                            for label in [0, 1, 2, 3]
-                            ]
+                        for indices in [ [ i for i in range(32) if labels[i].numpy() == label ] for label in [0, 1, 2, 3] ]
                         ]
                 weights_dict = weights_for_losses(losses)
 
