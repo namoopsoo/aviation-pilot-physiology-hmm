@@ -261,7 +261,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
     for epoch in range(epochs):
 
         for (batch, (invec, labels, _)) in enumerate(tqdm(dataset_batches.take(k))):
-            weights = [weights_dict[labels[i]] for i in range(32)]
+            weights = [weights_dict[labels[i].numpy()] for i in range(32)]
 
 
             # NOTE: is this tape in the right place?
