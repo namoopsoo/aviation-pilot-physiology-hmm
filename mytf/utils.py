@@ -282,7 +282,7 @@ def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
                 weights_dict = weights_for_losses(losses)
 
             loss_history.append(loss_value.numpy())
-            label_losses_history.append(losses)
+            label_losses_history.append([x.numpy() for x in losses])
             grads = tape.gradient(loss_value, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables),
                                     global_step=tf.compat.v1.train.get_or_create_global_step())
