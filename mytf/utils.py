@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 from functools import reduce
 from tensorflow import keras
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 from collections import Counter
@@ -786,6 +786,37 @@ def build_scaler_from_h5(loc, datasets, feature):
             [scaler.data_min_[0], scaler.data_max_[0]])
 
     return scaler, params_vec
+
+def build_many_scalers_from_h5(loc, datasets, scaler=None):
+    # one label at a time here..
+    if scaler is None:
+        scaler = MinMaxScaler()
+    params_vec = []
+    for name in tqdm(datasets):
+        X = read_h5_raw(loc, name)
+        fullsize = X.shape[0]*X.shape[1]
+        scaler.partial_fit(
+            np.reshape(X,
+                       (fullsize, X.shape[2])))
+        params_vec.append(
+            [scaler.data_min_, scaler.data_max_])
+
+    return scaler, params_vec
+
+def apply_scalers(loc, datasets, scaler, outloc):
+    # for each dataset, read. then write '_scaled'
+    for name in tqdm(datasets):
+        X = read_h5_raw(loc, name)
+        original_shape = X.shape
+        fullsize = X.shape[0]*X.shape[1]
+         
+        Xss = np.reshape(scaler.transform(
+            np.reshape(X,
+                       (fullsize, X.shape[2]))),
+                         original_shape)
+
+        mu.save_that(outloc, f'{name}_scaled',
+                     Xss)
 
 
 def to_json_local(data, loc):
