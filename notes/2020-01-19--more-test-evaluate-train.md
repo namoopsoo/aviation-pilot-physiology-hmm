@@ -1,5 +1,11 @@
+#### Summary 
+* Here I was trying to see if I can create another test set to theoretically see if there is just some weird problem with the main test set I have been using. 
+* But because the minority class is super low quantity, I actually couldn't create another one . That was the limiting detail
+* So instead, I just tried evaluating on the full training set since I hadn't tried that before. 
+* Up until now, I had just been plotting the "per Batch" loss. How does one know if the moving average loss is indeed a good approximation  ? 
+* But it turned out that looking at the full training set , indeed the result was good looking
 
-#### Notes
+#### Some Initial Notes , on my dataset processing
 So for some context, in [this notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-21.md) I baked a dataset using this approach:
 
 ```python
@@ -217,6 +223,7 @@ print(total_label_sums)
 from tqdm.auto import tqdm
 ```
 
+#### Ah crap not enough data so evaluation on train instead 
 
 ```python
 # Ah crap oops, so there was actually a very small amount of `label=1` in the entirety of this
