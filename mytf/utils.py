@@ -815,7 +815,7 @@ def apply_scalers(loc, datasets, scaler, outloc):
                        (fullsize, X.shape[2]))),
                          original_shape)
 
-        mu.save_that(outloc, f'{name}_scaled',
+        save_that(outloc, f'{name}_scaled',
                      Xss)
 
 
