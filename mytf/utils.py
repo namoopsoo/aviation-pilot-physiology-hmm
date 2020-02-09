@@ -250,17 +250,24 @@ def weights_for_losses(losses):
     
 
 
-def do_train(model, dataset_batches, k, epochs, optimizer_params, saveloc):
+def do_train(model, dataset_batches, k, epochs=None,
+                                        num_epochs=None,
+                                        optimizer_params=None, saveloc=None):
     optimizer = AdamOptimizer(**optimizer_params)
 
     loss_history = []
     label_losses_history = []
 
+    if num_epochs:
+        epochs = range(num_epochs)
+
     #weights = tf.constant(np.ones((32, 1)))
     weights_dict = {0: 1., 1: 1., 2: 1., 3:1.}
-    for epoch in range(epochs):
+    for epoch in epochs:
 
         for (batch, (invec, labels, _)) in enumerate(tqdm(dataset_batches.take(k))):
+            if labels.shape[0] < 32:
+                continue
             weights = np.array([weights_dict[labels[i].numpy()] for i in range(32)])
 
 
