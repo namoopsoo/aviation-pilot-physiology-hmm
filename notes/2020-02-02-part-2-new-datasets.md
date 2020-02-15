@@ -1,4 +1,6 @@
-
+### Summary
+- So the idea I'm trying here is that so far my train/test split has not been a neat random split, but instead out of the `10` or so *Crews* in the full data, I have used `crew=1` as train and `crew=2` as test. But I had observed earlier that `crew=2` has values in features that far exceed that observed in `crew=1` and this has been messing with scaling. 
+- So here I'm combining `crew=1` and `crew=2` and generating a random train/test split.
 
 ```python
 from importlib import reload
