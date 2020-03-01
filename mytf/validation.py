@@ -64,7 +64,7 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
     payloads = [{
         'modelloc': modelloc,
         'dataloc': dataloc,
-        'datasetnames': [x],
+        'dataset_names': [x],
         'eager': eager,
         'batch_size': batch_size}
         for x in dataset_names]
