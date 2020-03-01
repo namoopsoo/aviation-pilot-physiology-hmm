@@ -4,6 +4,7 @@ import itertools
 import math
 import pytz
 import h5py
+import time
 from copy import deepcopy
 import numpy as np
 from functools import reduce
@@ -670,11 +671,19 @@ def read_h5(source_location, Xdataset, Ydataset):
     return X, Ylabels
 
 def read_h5_two(source_location, Xdataset, Ydataset):
-    with h5py.File(source_location, 'r+') as fd:
-        X = fd[Xdataset].__array__()
-        Y = fd[Ydataset].__array__()
-        #Ylabels = np.argmax(Y, axis=1)
-        #counters_index[i] = dict(Counter(labels))
+    while True:
+        try:
+            with h5py.File(source_location, 'r+') as fd:
+                X = fd[Xdataset].__array__()
+                Y = fd[Ydataset].__array__()
+                #Ylabels = np.argmax(Y, axis=1)
+                #counters_index[i] = dict(Counter(labels))
+            break
+        except OSError as e:
+            if 'Resource temporarily unavailable' in repr(e):
+                time.sleep(1)
+            else:
+                raise
     return X, Y
         
 
