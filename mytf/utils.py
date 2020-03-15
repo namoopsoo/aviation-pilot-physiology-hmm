@@ -527,13 +527,19 @@ def make_data(df, crews={'training': [1],
                                     overlap=None)
 
 
-def do_window_data(df, 
-                        window_size=256,
-                        row_batch_size=None,
-                        feature_cols=['r'],
-                        save_dir=None):
+def make_test_data(df, 
+                   window_size=256,
+                   row_batch_size=None,
+                   feature_cols=None,
+                   save_dir=None):
+    # Given unlabeled data, make it into sequenced data for prediction.
     # keep_index; and option for overlap.
-    pass
+    _ = get_windows_h5(df,
+                       cols=['id'] + feature_cols, # + ['event'],
+                       window_size=window_size,
+                       row_batch_size=row_batch_size,
+                       save_location=f'{save_dir}/finaltest.h5',
+                       overlap=window_size)
 
 '''
     outdata = {
@@ -610,12 +616,18 @@ def get_windows(df, cols, window_size, percent_of_data=100):
     return np.concatenate(X), np.concatenate(Y)
 
 
-def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
+def get_windows_h5(df, cols, window_size, row_batch_size, save_location,
+                    overlap=False):
     # for every <row_batch_size> rows, save to disk, to <save_location>.
-    parts = get_partitions(range(df.shape[0]), row_batch_size)
+    if overlap:
+        parts = get_partitions(range(df.shape[0]), row_batch_size)
+        _, parts = make_overlapping_partitions(vec, slice_size,
+                                              overlap=window_size)
+    else:
+        parts = get_partitions(range(df.shape[0]), row_batch_size)
     datasets = []
     for i, part in enumerate(parts):
-        X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
+        IX, X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
         # Save to disk...
         with h5py.File(save_location, "a") as f:
             X_name, Y_name = f'dataset_{i}_X', f'dataset_{i}_Y'
@@ -629,40 +641,59 @@ def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
 
 
 def _inner_get_windows(df, cols, window_size):
+    IX = []
     X = []
     Y = []
-    choices = (df.crew.unique().tolist(), [0, 1], ['CA', 'DA', 'SS'])
+    choices = (df.crew.unique().tolist(),
+            df.seat.unique().tolist(),
+            #['CA', 'DA', 'SS', 'LOFT']
+            df.experiment.unique().tolist(),
+            )
     for crew, seat, experiment in itertools.product(*choices):
-        query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
+        query = ((df.crew == crew)
+                & (df.seat == seat)
+                & (df.experiment == experiment))
         thisdf = df[query][cols]
         if thisdf.empty:
             continue
 
-        X_i, Y_i = to_sequences(thisdf.values, window_size,
+        (IX_i, X_i, Y_i) = to_sequences(thisdf.values, seq_size=window_size,
                                 incols=range(len(cols) - 1),
-                                outcol=-1)
+                                outcol=-1,
+                                indexcol=0)
+        IX.append(IX_i)
         X.append(X_i)
         Y.append(Y_i)
 
-    return np.concatenate(X), np.concatenate(Y)
+    return np.concatenate(IX), np.concatenate(X), np.concatenate(Y)
 
 
 # Borrowing parts of this func from
 # https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
-def to_sequences(obs, seq_size, incols, outcol):
+def to_sequences(obs, seq_size, incols, outcol=None, indexcol=None):
+    # Given an input sequence, produce additional windowed sequences, 
+    # Treat the last element of a sequence as both the "Label" and "Index" 
+    #       of that sequence.
+    ix = []
     x = []
     y = []
 
-    for i in range(len(obs)-seq_size):
+    for i in range(len(obs) - seq_size + 1):
         window = obs[i:(i+seq_size)][:, incols]
-        after_window = obs[i+seq_size - 1, outcol]
-
         x.append(window)
-        y.append(after_window)
 
+        if outcol is not None:
+            after_window = obs[i+seq_size - 1, outcol]
+            y.append(after_window)
+        if indexcol is not None:
+            index = obs[i+seq_size - 1, indexcol]
+            ix.append(index)
+
+    ixarr = np.array(ix)
     xarr = np.array(x)
     yarr = np.array(y)
-    return (xarr,
+    return (ixarr,
+            xarr,
             yarr)
 
 
