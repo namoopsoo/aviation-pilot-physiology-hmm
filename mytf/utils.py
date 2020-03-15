@@ -416,6 +416,29 @@ def get_partitions(vec, slice_size, keep_remainder=True):
     return slices
 
 
+def make_overlapping_partitions(vec, slice_size, overlap, keep_remainder=True):
+    assert slice_size > 0 and overlap >= 0 and slice_size > overlap
+
+    num_slices = int(math.floor(len(vec)/(slice_size - overlap)))
+
+    indices = [
+            [k*(slice_size - overlap), k*(slice_size - overlap) + slice_size]
+            for k in range(num_slices)]
+
+    slices = [
+            vec[a: b]
+            for (a, b) in indices]
+
+#    if indices[-1][1] > len(vec) - 1:
+#        # no remainder..
+#    #size_remainder = len(vec) - num_slices*(slice_size - overlap)
+#    #assert size_remainder >= 0
+#    if size_remainder and keep_remainder:
+#        slices.append(vec[-(size_remainder + overlap):])
+
+    return slices
+
+
 # Earlier data utils...
 
 encode_class = np.vectorize(lambda x: {'A': 0,
