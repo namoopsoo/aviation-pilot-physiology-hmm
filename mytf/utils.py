@@ -513,7 +513,9 @@ def make_data(df, crews={'training': [1],
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
-                                    save_location=f'{save_dir}/train.h5')
+                                    save_location=f'{save_dir}/train.h5',
+                                    overlap=False,
+                                    _type='train')
 
     # Testing
     print('Start building testing set', quickts())
@@ -524,7 +526,8 @@ def make_data(df, crews={'training': [1],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
                                     save_location=f'{save_dir}/test.h5',
-                                    overlap=None)
+                                    overlap=False,
+                                    _type='train')
 
 
 def make_test_data(df, 
@@ -539,7 +542,8 @@ def make_test_data(df,
                        window_size=window_size,
                        row_batch_size=row_batch_size,
                        save_location=f'{save_dir}/finaltest.h5',
-                       overlap=window_size)
+                       overlap=window_size,
+                       _type='test')
 
 '''
     outdata = {
@@ -617,26 +621,37 @@ def get_windows(df, cols, window_size, percent_of_data=100):
 
 
 def get_windows_h5(df, cols, window_size, row_batch_size, save_location,
-                    overlap=False):
+                    overlap=False,
+                    _type=None):
     # for every <row_batch_size> rows, save to disk, to <save_location>.
     if overlap:
-        parts = get_partitions(range(df.shape[0]), row_batch_size)
-        _, parts = make_overlapping_partitions(vec, slice_size,
+        _, parts = make_overlapping_partitions(range(df.shape[0]),
+                                              row_batch_size,
                                               overlap=window_size)
     else:
         parts = get_partitions(range(df.shape[0]), row_batch_size)
+
     datasets = []
     for i, part in enumerate(parts):
         IX, X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
         # Save to disk...
         with h5py.File(save_location, "a") as f:
-            X_name, Y_name = f'dataset_{i}_X', f'dataset_{i}_Y'
-            datasets.append({'X_name': X_name, 'Y_name': Y_name})
+            IX_name, X_name, Y_name = (f'dataset_{i}_IX',
+                                        f'dataset_{i}_X',
+                                        f'dataset_{i}_Y') 
+            datasets.append({
+                            'IX_name': IX_name,
+                            'X_name': X_name,
+                            'Y_name': Y_name,
+                            })
+            f.create_dataset(IX_name, data=np.array(IX, dtype=float))
             f.create_dataset(X_name, data=np.array(X, dtype=float))
-            f.create_dataset(Y_name,
-                            data=np.array(
-                                reshape_y(encode_class(Y), 4),
-                                dtype=float))
+
+            if _type == 'test':
+                f.create_dataset(Y_name,
+                                data=np.array(
+                                    reshape_y(encode_class(Y), 4),
+                                    dtype=float))
     return datasets
 
 
