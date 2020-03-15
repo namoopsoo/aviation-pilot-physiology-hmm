@@ -46,7 +46,7 @@ def big_s3_csv_to_df(bucket_name, s3_filename_prefix, suffixes):
     return pd.read_csv(foo)
 
 
-def df_to_s3(bucket, df, s3fn, index=False):
+def df_to_s3(bucket_name, df, s3fn, index=False):
     s = StringIO()
     df.to_csv(s, index=index)
     write_s3_file(bucket_name, s3fn, content=s.getvalue())

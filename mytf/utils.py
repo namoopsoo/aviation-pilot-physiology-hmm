@@ -417,6 +417,9 @@ def get_partitions(vec, slice_size, keep_remainder=True):
 
 
 def make_overlapping_partitions(vec, slice_size, overlap, keep_remainder=True):
+    #
+    # NOTE , this case still weird, mu.make_overlapping_partitions(list(range(30)), 10, 9)
+    #
     assert slice_size > 0 and overlap >= 0 and slice_size > overlap
 
     num_slices = int(math.floor(len(vec)/(slice_size - overlap)))
@@ -425,18 +428,26 @@ def make_overlapping_partitions(vec, slice_size, overlap, keep_remainder=True):
             [k*(slice_size - overlap), k*(slice_size - overlap) + slice_size]
             for k in range(num_slices)]
 
+    if keep_remainder:
+        if indices[-1][1] < len(vec):
+            indices.append([indices[-1][1] - overlap,
+                            len(vec) + 1])
+    else:
+        if indices[-1][1] > len(vec) - 1:
+            indices.pop(-1)
+
     slices = [
             vec[a: b]
             for (a, b) in indices]
 
-#    if indices[-1][1] > len(vec) - 1:
+    return indices, slices
+
 #        # no remainder..
 #    #size_remainder = len(vec) - num_slices*(slice_size - overlap)
 #    #assert size_remainder >= 0
 #    if size_remainder and keep_remainder:
-#        slices.append(vec[-(size_remainder + overlap):])
 
-    return slices
+#        slices.append(vec[-(size_remainder + overlap):])
 
 
 # Earlier data utils...
@@ -512,8 +523,17 @@ def make_data(df, crews={'training': [1],
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
-                                    save_location=f'{save_dir}/test.h5')
+                                    save_location=f'{save_dir}/test.h5',
+                                    overlap=None)
 
+
+def do_window_data(df, 
+                        window_size=256,
+                        row_batch_size=None,
+                        feature_cols=['r'],
+                        save_dir=None):
+    # keep_index; and option for overlap.
+    pass
 
 '''
     outdata = {
