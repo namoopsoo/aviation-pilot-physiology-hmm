@@ -625,7 +625,7 @@ def get_windows_h5(df, cols, window_size, row_batch_size, save_location,
                     _type=None):
     # for every <row_batch_size> rows, save to disk, to <save_location>.
     if overlap:
-        _, parts = make_overlapping_partitions(range(df.shape[0]),
+        indices, parts = make_overlapping_partitions(range(df.shape[0]),
                                               row_batch_size,
                                               overlap=window_size)
     else:
@@ -633,29 +633,32 @@ def get_windows_h5(df, cols, window_size, row_batch_size, save_location,
 
     datasets = []
     for i, part in enumerate(parts):
-        IX, X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
+        IX, X, Y = _inner_get_windows(df.iloc[part], cols, window_size,
+                                     _type=_type)
         # Save to disk...
         with h5py.File(save_location, "a") as f:
             IX_name, X_name, Y_name = (f'dataset_{i}_IX',
                                         f'dataset_{i}_X',
                                         f'dataset_{i}_Y') 
-            datasets.append({
-                            'IX_name': IX_name,
-                            'X_name': X_name,
-                            'Y_name': Y_name,
-                            })
             f.create_dataset(IX_name, data=np.array(IX, dtype=float))
             f.create_dataset(X_name, data=np.array(X, dtype=float))
 
-            if _type == 'test':
+            if _type == 'train':
                 f.create_dataset(Y_name,
                                 data=np.array(
                                     reshape_y(encode_class(Y), 4),
                                     dtype=float))
+                datasets.append({'IX_name': IX_name,
+                                'X_name': X_name,
+                                'Y_name': Y_name,})
+            elif _type == 'test':
+                datasets.append({'IX_name': IX_name,
+                                'X_name': X_name, })
+
     return datasets
 
 
-def _inner_get_windows(df, cols, window_size):
+def _inner_get_windows(df, cols, window_size, _type):
     IX = []
     X = []
     Y = []
@@ -673,8 +676,9 @@ def _inner_get_windows(df, cols, window_size):
             continue
 
         (IX_i, X_i, Y_i) = to_sequences(thisdf.values, seq_size=window_size,
-                                incols=range(len(cols) - 1),
-                                outcol=-1,
+                                # First col index...
+                                incols=range(1, len(cols) - 1),
+                                outcol=(-1 if _type == 'train' else None),
                                 indexcol=0)
         IX.append(IX_i)
         X.append(X_i)
