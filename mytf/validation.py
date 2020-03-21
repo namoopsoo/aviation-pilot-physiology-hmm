@@ -51,21 +51,45 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
     return lossvec
 
 
-def perf_wrapper(modelloc, dataloc, eager, batch_size=None):
+def unlabeled_prediction(model, dataloc, dataset_names, eager, batch_size=None):
+    predsvec = []
+    for Xdataset in dataset_names:
+
+        X = mu.read_h5_raw(dataloc, Xdataset) 
+        parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
+
+        for part in parts:
+            preds = model(X[part].astype('float32'))
+            predsvec.append(preds)
+
+
+    return np.concatenate(predsvec)
+
+
+def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
+                                           labeled=None):
     # dataloc: h5 location for test data
     if batch_size is None:
         batch_size = 100
 
+    # This was for my balanced and labeled dataset before
     dataset_names = [['X_0', 'Ylabels_0'],
                     ['X_1', 'Ylabels_1'],
                     ['X_2', 'Ylabels_2'],
                     ['X_3', 'Ylabels_3']]
+    # FIXME
+    # But for now hard coding , for the un-labeled case...
+    dataset_names = [['dataset_0_X'],
+                    ['dataset_1_X'],
+                    ['dataset_2_X'],
+                    ['dataset_3_X']]
 
     payloads = [{
         'modelloc': modelloc,
         'dataloc': dataloc,
         'dataset_names': [x],
         'eager': eager,
+        'labeled': labeled,
         'batch_size': batch_size}
         for x in dataset_names]
     lossvec = mp.parallel_async_invoke(payloads, the_job)
@@ -79,15 +103,24 @@ def _job_inner(payload):
     dataset_names = payload['dataset_names']
     eager = payload['eager']
     batch_size = payload['batch_size']
+    labeled = payload['labeled']
 
     model = mu.load_model(modelloc)
 
-    return get_performance_parts(
-                    model=model,
-                    dataloc=dataloc,
-                    dataset_names=dataset_names,
-                    eager=eager,
-                    batch_size=batch_size)
+    if labeled:
+        return get_performance_parts(
+                        model=model,
+                        dataloc=dataloc,
+                        dataset_names=dataset_names,
+                        eager=eager,
+                        batch_size=batch_size)
+    else:
+        return unlabeled_prediction(
+                        model=model,
+                        dataloc=dataloc,
+                        dataset_names=dataset_names,
+                        eager=eager,
+                        batch_size=batch_size)
 
 
 def the_job(input_payload, conn):

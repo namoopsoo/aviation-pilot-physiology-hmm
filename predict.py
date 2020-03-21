@@ -38,6 +38,11 @@ def bake_options():
             [['--work-dir', '-w'],
                 {
                     'help': 'Directory to save new artifacts'},],
+            [['--labeled', '-l'],
+                {'action': 'store_true',
+                    'help': 'specify this dataset includes Y labels '
+                            'so compute logloss. Otherwise, will '
+                            'prepare the one-hotted predictions.'},],
 
                 #'required': False
                 ]
@@ -47,11 +52,15 @@ def do_predict(kwargs):
         print(kwargs)
         sys.exit()
 
+    import ipdb ; ipdb.set_trace();
+
     if kwargs['eager']:
         tf.compat.v1.enable_eager_execution()
         steplosses = eager_predict(kwargs)
     else:
         steplosses = graph_predict(kwargs)
+
+    # TODO => depending on labeled or not, results are steplosses or preds..
 
     # Save this ...
     workdir = kwargs['work_dir']
@@ -91,6 +100,7 @@ def graph_predict(kwargs):
 def eager_predict(kwargs):
     modelloc = kwargs['model_loc']
     test_loc = kwargs['test_loc']
+    labeled = kwargs['labeled']
 
 
     # tensor = foo()
@@ -98,7 +108,8 @@ def eager_predict(kwargs):
     steplosses = mv.perf_wrapper(modelloc,
             dataloc=test_loc,
             eager=True,
-            batch_size=int(kwargs['batch_size']))
+            batch_size=int(kwargs['batch_size']),
+            labeled=labeled)
 
     return steplosses
 
