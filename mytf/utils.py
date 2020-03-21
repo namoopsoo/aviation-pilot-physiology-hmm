@@ -677,7 +677,7 @@ def _inner_get_windows(df, cols, window_size, _type):
 
         (IX_i, X_i, Y_i) = to_sequences(thisdf.values, seq_size=window_size,
                                 # First col index...
-                                incols=range(1, len(cols) - 1),
+                                incols=range(1, len(cols)),
                                 outcol=(-1 if _type == 'train' else None),
                                 indexcol=0)
         IX.append(IX_i)
