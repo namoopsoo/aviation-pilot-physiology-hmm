@@ -44,6 +44,10 @@ def bake_options():
                             'so compute logloss. Otherwise, will '
                             'prepare the one-hotted predictions.'},],
 
+            [['--parallel', '-p'],
+                {'action': 'store_true',
+                    'help': 'Parallel.'},],
+
                 #'required': False
                 ]
 
@@ -52,11 +56,10 @@ def do_predict(kwargs):
         print(kwargs)
         sys.exit()
 
-    import ipdb ; ipdb.set_trace();
 
     if kwargs['eager']:
         tf.compat.v1.enable_eager_execution()
-        steplosses = eager_predict(kwargs)
+        steplosses = eager_predict(kwargs)  #FIXME
     else:
         steplosses = graph_predict(kwargs)
 
@@ -102,14 +105,14 @@ def eager_predict(kwargs):
     test_loc = kwargs['test_loc']
     labeled = kwargs['labeled']
 
-
     # tensor = foo()
     # Evaluate the tensor `c`.
     steplosses = mv.perf_wrapper(modelloc,
             dataloc=test_loc,
             eager=True,
             batch_size=int(kwargs['batch_size']),
-            labeled=labeled)
+            labeled=labeled,
+            parallel=kwargs['parallel'])
 
     return steplosses
 

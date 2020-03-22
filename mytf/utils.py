@@ -773,6 +773,7 @@ def read_h5_two(source_location, Xdataset, Ydataset):
                 #counters_index[i] = dict(Counter(labels))
             break
         except OSError as e:
+            print('sleeping')
             if 'Resource temporarily unavailable' in repr(e):
                 time.sleep(1)
             else:
@@ -781,8 +782,18 @@ def read_h5_two(source_location, Xdataset, Ydataset):
         
 
 def read_h5_raw(source_location, name):
-    with h5py.File(source_location, 'r+') as fd:
-        return fd[name].__array__()
+    while True:
+        try:
+            with h5py.File(source_location, 'r+') as fd:
+                return fd[name].__array__()
+            break
+        except OSError as e:
+            print('sleeping')
+            if 'Resource temporarily unavailable' in repr(e):
+                time.sleep(1)
+            else:
+                raise
+
 
 
 def h5_keys(loc):

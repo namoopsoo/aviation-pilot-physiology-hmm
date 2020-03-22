@@ -67,7 +67,8 @@ def unlabeled_prediction(model, dataloc, dataset_names, eager, batch_size=None):
 
 
 def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
-                                           labeled=None):
+                                           labeled=None,
+                                           parallel=None):
     # dataloc: h5 location for test data
     if batch_size is None:
         batch_size = 100
@@ -79,10 +80,13 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
                     ['X_3', 'Ylabels_3']]
     # FIXME
     # But for now hard coding , for the un-labeled case...
-    dataset_names = [['dataset_0_X'],
-                    ['dataset_1_X'],
-                    ['dataset_2_X'],
-                    ['dataset_3_X']]
+    dataset_names = [
+            'dataset_0_X_scaled',
+            'dataset_100_X_scaled',
+            'dataset_101_X_scaled',
+            'dataset_102_X_scaled',
+            ]
+    # ['dataset_0_X', 'dataset_1_X', 'dataset_2_X', 'dataset_3_X']
 
     payloads = [{
         'modelloc': modelloc,
@@ -92,7 +96,12 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
         'labeled': labeled,
         'batch_size': batch_size}
         for x in dataset_names]
-    lossvec = mp.parallel_async_invoke(payloads, the_job)
+    if parallel:
+        lossvec = mp.parallel_async_invoke(payloads, the_job)
+    else:
+        lossvec = [
+                _job_inner(input_payload)
+                for input_payload in payloads]
 
     return lossvec
 
