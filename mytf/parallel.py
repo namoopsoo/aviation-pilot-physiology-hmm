@@ -1,6 +1,9 @@
 import traceback
 from multiprocessing import Process, Pipe
 
+from joblib import Parallel, delayed
+
+
 def parallel_async_invoke(payloads, work_func):
     # => https://aws.amazon.com/blogs/compute/parallel-processing-in-python-with-aws-lambda/
     # create a list to keep all processes
@@ -29,3 +32,9 @@ def parallel_async_invoke(payloads, work_func):
 
     return results
 
+
+def joblib_parallel(payloads, workfunc):
+    return Parallel(n_jobs=1, verbose=10
+            )(delayed(workfunc)(input_payload)
+                    for input_payload in payloads)
+    

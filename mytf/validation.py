@@ -1,5 +1,6 @@
 import json
 import traceback
+import pandas as pd
 import numpy as np
 from multiprocessing import Pool
 import tensorflow as tf
@@ -51,42 +52,65 @@ def get_performance_parts(model, dataloc, dataset_names, eager, batch_size=None)
     return lossvec
 
 
-def unlabeled_prediction(model, dataloc, dataset_names, eager, batch_size=None):
+def unlabeled_prediction(model, dataloc, dataset_names, eager, batch_size=None,
+                                workdir=None):
     predsvec = []
-    for Xdataset in dataset_names:
+    for names in dataset_names:
+        Xdataset = names['X']
 
         X = mu.read_h5_raw(dataloc, Xdataset) 
-        parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
+        parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=True)
 
         for part in parts:
             preds = model(X[part].astype('float32'))
             predsvec.append(preds)
 
+        IX = mu.read_h5_raw(dataloc, names['IX'])
 
-    return np.concatenate(predsvec)
+    outfile = f'{workdir}/preds-{mu.quickts()}.csv'
+
+    try:
+        Ypreds = np.round_(np.concatenate(predsvec), decimals=1)
+        pd.DataFrame(
+                np.hstack([
+                    np.reshape(IX, (IX.shape[0], 1)),
+                    Ypreds]),
+                columns=['id', '0', '1', '2', '3']).to_csv(outfile)
+    except ValueError as e:
+        print(f'not writing to {outfile}, because {e}, w.r.t. {dataset_names}')
+        # 'zero-dimensional arrays cannot be concatenated'
+        import ipdb ; ipdb.set_trace();
+
+    pass
+
+
+def _make_datasets(dataloc):
+    allkeys = mu.h5_keys(dataloc)
+    xkeys = [x.split('_')[1]
+            for x in allkeys 
+            if '_X_scaled' in x]
+
+    return [{'X': f'dataset_{i}_X_scaled',
+                'IX': f'dataset_{i}_IX'}
+            for i in xkeys]
 
 
 def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
                                            labeled=None,
-                                           parallel=None):
+                                           parallel=None,
+                                           workdir=None):
     # dataloc: h5 location for test data
     if batch_size is None:
         batch_size = 100
 
     # This was for my balanced and labeled dataset before
-    dataset_names = [['X_0', 'Ylabels_0'],
-                    ['X_1', 'Ylabels_1'],
-                    ['X_2', 'Ylabels_2'],
-                    ['X_3', 'Ylabels_3']]
-    # FIXME
-    # But for now hard coding , for the un-labeled case...
-    dataset_names = [
-            'dataset_0_X_scaled',
-            'dataset_100_X_scaled',
-            'dataset_101_X_scaled',
-            'dataset_102_X_scaled',
-            ]
-    # ['dataset_0_X', 'dataset_1_X', 'dataset_2_X', 'dataset_3_X']
+    if labeled:
+        dataset_names = [['X_0', 'Ylabels_0'],
+                        ['X_1', 'Ylabels_1'],
+                        ['X_2', 'Ylabels_2'],
+                        ['X_3', 'Ylabels_3']]
+    else:
+        dataset_names = _make_datasets(dataloc)
 
     payloads = [{
         'modelloc': modelloc,
@@ -94,10 +118,11 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
         'dataset_names': [x],
         'eager': eager,
         'labeled': labeled,
+        'workdir': workdir,
         'batch_size': batch_size}
         for x in dataset_names]
     if parallel:
-        lossvec = mp.parallel_async_invoke(payloads, the_job)
+        lossvec = mp.joblib_parallel(payloads, _job_inner)
     else:
         lossvec = [
                 _job_inner(input_payload)
@@ -108,10 +133,10 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
 
 def _job_inner(payload):
     modelloc = payload['modelloc']
-    dataloc = payload['dataloc']
-    dataset_names = payload['dataset_names']
-    eager = payload['eager']
-    batch_size = payload['batch_size']
+#     dataloc = payload['dataloc']
+#     dataset_names = payload['dataset_names']
+#     eager = payload['eager']
+#     batch_size = payload['batch_size']
     labeled = payload['labeled']
 
     model = mu.load_model(modelloc)
@@ -119,17 +144,18 @@ def _job_inner(payload):
     if labeled:
         return get_performance_parts(
                         model=model,
-                        dataloc=dataloc,
-                        dataset_names=dataset_names,
-                        eager=eager,
-                        batch_size=batch_size)
+                        dataloc=payload['dataloc'],
+                        dataset_names=payload['dataset_names'],
+                        eager=payload['eager'],
+                        batch_size=payload['batch_size'])
     else:
         return unlabeled_prediction(
                         model=model,
-                        dataloc=dataloc,
-                        dataset_names=dataset_names,
-                        eager=eager,
-                        batch_size=batch_size)
+                        dataloc=payload['dataloc'],
+                        dataset_names=payload['dataset_names'],
+                        eager=payload['eager'],
+                        batch_size=payload['batch_size'],
+                        workdir=payload['workdir'])
 
 
 def the_job(input_payload, conn):

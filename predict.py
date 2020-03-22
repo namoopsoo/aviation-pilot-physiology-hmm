@@ -112,7 +112,8 @@ def eager_predict(kwargs):
             eager=True,
             batch_size=int(kwargs['batch_size']),
             labeled=labeled,
-            parallel=kwargs['parallel'])
+            parallel=kwargs['parallel'],
+            workdir=kwargs['work_dir'])
 
     return steplosses
 
