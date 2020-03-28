@@ -1139,6 +1139,7 @@ array([[[-0.00865528,  0.37437108,  0.29741032,  0.58548244,
 
 #### Indices... hmm
 * This looks weird though. Why not overlapping though? Grr..
+* _[EDIT later I realize that's just how I wrote my overlap code. so it's all good.]_
 
 ```python
 
