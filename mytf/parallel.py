@@ -34,7 +34,7 @@ def parallel_async_invoke(payloads, work_func):
 
 
 def joblib_parallel(payloads, workfunc):
-    return Parallel(n_jobs=1, verbose=10
+    return Parallel(n_jobs=4, verbose=10
             )(delayed(workfunc)(input_payload)
                     for input_payload in payloads)
     

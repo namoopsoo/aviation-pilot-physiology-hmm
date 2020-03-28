@@ -71,16 +71,16 @@ def unlabeled_prediction(model, dataloc, dataset_names, eager, batch_size=None,
 
     try:
         Ypreds = np.round_(np.concatenate(predsvec), decimals=1)
-        pd.DataFrame(
+        df = pd.DataFrame(
                 np.hstack([
                     np.reshape(IX, (IX.shape[0], 1)),
                     Ypreds]),
-                columns=['id', '0', '1', '2', '3']).to_csv(outfile)
+                columns=['id', '0', '1', '2', '3'])
+        df.id = df.id.map(lambda x: int(x))
+        df.to_csv(outfile, index=False, float_format='%.1f')
     except ValueError as e:
         print(f'not writing to {outfile}, because {e}, w.r.t. {dataset_names}')
         # 'zero-dimensional arrays cannot be concatenated'
-        import ipdb ; ipdb.set_trace();
-
     pass
 
 
@@ -132,6 +132,8 @@ def perf_wrapper(modelloc, dataloc, eager, batch_size=None,
 
 
 def _job_inner(payload):
+
+    tf.compat.v1.enable_eager_execution()
     modelloc = payload['modelloc']
 #     dataloc = payload['dataloc']
 #     dataset_names = payload['dataset_names']

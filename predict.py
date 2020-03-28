@@ -145,10 +145,21 @@ def eager_predict(kwargs):
             workdir=workdir)
 
     # TODO ... combine those csv files....
+    combine_preds(workdir)
     final_delete(workdir)
 
 
     return steplosses
+
+
+def combine_preds(workdir):
+    files = [x for x in os.listdir(workdir)
+            if x.startswith('preds')] 
+
+    predsdf = pd.concat([pd.read_csv(x, index_col=None)
+                        for x in files])
+    predsdf.to_csv(f'{workdir}/crewseat.blah.csv', index=False)
+    # df.to_csv(outfile, index=False, float_format='%.1f')
 
 
 def do_preprocess(raw_test_loc, workdir, scalers_loc):
@@ -164,14 +175,13 @@ def do_preprocess(raw_test_loc, workdir, scalers_loc):
             feature_cols=featurecols,
             save_dir=workdir)
 
-    #
     finalloc = f'{workdir}/finaltest.h5'
+    finalscaledloc = f'{workdir}/finaltest_scaled.h5'
     mu.apply_scalers(finalloc,
                datasets=[x for x in mu.h5_keys(finalloc)
                            if '_X' in x],
                scaler=scalers,
-               outloc=f'{workdir}/finaltest_scaled.h5')
-    finalscaledloc = f'{workdir}/finaltest_scaled.h5'
+               outloc=finalscaledloc)
 
     mu.transfer(source_location=finalloc,
             source_datasets=[x for x in mu.h5_keys(finalloc)
@@ -182,7 +192,13 @@ def do_preprocess(raw_test_loc, workdir, scalers_loc):
 def final_delete(workdir):
     # Delete the finaltest.h5 and finaltest_scled.h5 files
     # because they take up alot of space.
-    pass
+    finalloc = f'{workdir}/finaltest.h5'
+    finalscaledloc = f'{workdir}/finaltest_scaled.h5'
+    os.remove(finalloc)
+    os.remove(finalscaledloc)
+
+
+
 
 
 
