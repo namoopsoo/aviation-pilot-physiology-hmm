@@ -925,7 +925,7 @@ def build_many_scalers_from_h5(loc, datasets, scaler=None):
 
 def apply_scalers(loc, datasets, scaler, outloc):
     # for each dataset, read. then write '_scaled'
-    for name in tqdm(datasets):
+    for name in datasets:
         X = read_h5_raw(loc, name)
         original_shape = X.shape
         fullsize = X.shape[0]*X.shape[1]

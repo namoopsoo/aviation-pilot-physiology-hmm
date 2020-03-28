@@ -82,9 +82,9 @@ def do_predict(kwargs):
 
     # Save this ...
     workdir = kwargs['work_dir']
-    mu.to_json_local({'steploss': steplosses}, 
+    mu.to_json_local({'steploss': steplosses},
                   f'{workdir}/{mu.quickts()}.json')
-    
+
     print('Done.')
 
 
@@ -101,7 +101,7 @@ def graph_predict(kwargs):
                                     ['X_2', 'Ylabels_2'],
                                     ['X_3', 'Ylabels_3']]:
             #
-            X, Ylabels = mu.read_h5_two(test_loc, Xdataset, Ydataset) 
+            X, Ylabels = mu.read_h5_two(test_loc, Xdataset, Ydataset)
             parts = mu.get_partitions(range(X.shape[0]), batch_size, keep_remainder=False)
             batchlosses = []
             for part in parts:
@@ -124,6 +124,7 @@ def eager_predict(kwargs):
     scalers_loc = kwargs.get('scalers_loc')
     workdir = kwargs['work_dir']
 
+
     if preprocess:
         assert raw_test_loc and not test_loc and scalers_loc
         do_preprocess(raw_test_loc, workdir=workdir,
@@ -139,6 +140,10 @@ def eager_predict(kwargs):
             parallel=kwargs['parallel'],
             workdir=workdir)
 
+    # TODO ... combine those csv files....
+    final_delete(workdir)
+
+
     return steplosses
 
 
@@ -147,32 +152,34 @@ def do_preprocess(raw_test_loc, workdir, scalers_loc):
 
     scalers = joblib.load(scalers_loc)
 
-    featurecols = ['r', 'ecg', 'gsr',  
-              'eeg_fp1','eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', ] 
-    mu.make_test_data(df, 
-            window_size=64, 
-            row_batch_size=10000, 
-            feature_cols=featurecols, 
+    featurecols = ['r', 'ecg', 'gsr',
+              'eeg_fp1','eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', ]
+    mu.make_test_data(df,
+            window_size=64,
+            row_batch_size=10000,
+            feature_cols=featurecols,
             save_dir=workdir)
 
     #
     finalloc = f'{workdir}/finaltest.h5'
-    testloc = ?
-    mu.apply_scalers(finalloc, 
-               datasets=[x for x in mu.h5_keys(testloc) 
+    mu.apply_scalers(finalloc,
+               datasets=[x for x in mu.h5_keys(finalloc)
                            if '_X' in x],
                scaler=scalers,
                outloc=f'{workdir}/finaltest_scaled.h5')
     finalscaledloc = f'{workdir}/finaltest_scaled.h5'
 
-    mu.transfer(source_location=finalloc, 
-            source_datasets=[x for x in mu.h5_keys(finalloc) 
-                               if '_IX' in x], 
+    mu.transfer(source_location=finalloc,
+            source_datasets=[x for x in mu.h5_keys(finalloc)
+                               if '_IX' in x],
             save_location=finalscaledloc)
 
 
-def final_delete():
+def final_delete(workdir):
+    # Delete the finaltest.h5 and finaltest_scled.h5 files
+    # because they take up alot of space.
     pass
+
 
 
 def do():
