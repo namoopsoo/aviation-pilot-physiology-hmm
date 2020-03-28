@@ -9,6 +9,7 @@ time python predict.py --test-loc-h5 data/2020-03-15T2032Z/finaltest_scaled.h5 \
         --batch-size 1024 \
         --model-loc history/2020-02-16T035758Z/epoch_001_batch_01760_model.h5 \
         --work-dir data/2020-03-15T2032Z \
+        --parallel \
         --eager    
 ```
 * New form , points directly to my files like `data/test-crew-1_seat-0.csv` . To prepare for this, I also just threw files like `history/2020-02-02T044441Z/scalers.joblib` into a dir that I had similarly generated on AWS. Just recreated locally to make things easier.
@@ -23,4 +24,29 @@ time python predict.py --raw-test-loc data/test-crew-1_seat-0.csv \
         --parallel \
         --eager    
 ```
+* Cool so using joblib parallel, this took ... not that long
+
+```
+[Parallel(n_jobs=4)]: Done 105 out of 105 | elapsed:  3.8min finished
+
+```
+* so first one ... , was `test-crew-1_seat-0`  
+
+* ok next one...
+
+```bash
+time python predict.py --raw-test-loc data/test-crew-1_seat-1.csv \
+        --batch-size 1024 \
+        --model-loc history/2020-02-16T035758Z/epoch_001_batch_01760_model.h5 \
+        --scalers-loc history/2020-02-02T044441Z/scalers.joblib \
+        --work-dir data/2020-03-15T2032Z \
+        --preprocess \
+        --parallel \
+        --eager  
+```
+
+
+
+
+
 
