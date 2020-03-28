@@ -1,9 +1,11 @@
 import sys
 import numpy as np
+import pandas as pd
 import argparse
 import os
 import json
 import tensorflow as tf
+import joblib
 
 import mytf.utils as mu
 import mytf.validation as mv
@@ -26,9 +28,18 @@ def bake_options():
             [['--model-loc', '-m'],
                 {
                     'help': 'file path of model.  '},],
-            [['--test-loc', '-t'],
+            [['--test-loc-h5', '-t'],
                 {
-                    'help': 'file path of test set.  '},],
+                    'help': 'file path of h5 test set.'
+                            ' (Already scaled data.)'},],
+            [['--raw-test-loc', '-T'],
+                {
+                    'help': 'file path of raw test csv.'
+                            ' (Not scaled data.)'},],
+            [['--scalers-loc', '-s'],
+                {
+                    'help': 'file path of scalers joblib file.'
+                            },],
             [['--batch-size', '-b'],
                 {
                     'help': 'batch size. Needed not for training  '
@@ -47,6 +58,10 @@ def bake_options():
             [['--parallel', '-p'],
                 {'action': 'store_true',
                     'help': 'Parallel.'},],
+
+            [['--preprocess', '-P'],
+                {'action': 'store_true',
+                    'help': 'do preprocess.'},],
 
                 #'required': False
                 ]
@@ -102,20 +117,62 @@ def graph_predict(kwargs):
 
 def eager_predict(kwargs):
     modelloc = kwargs['model_loc']
-    test_loc = kwargs['test_loc']
+    test_loc = kwargs.get('test_loc_h5')
+    raw_test_loc = kwargs.get('raw_test_loc')
     labeled = kwargs['labeled']
+    preprocess = kwargs['preprocess']
+    scalers_loc = kwargs.get('scalers_loc')
+    workdir = kwargs['work_dir']
 
-    # tensor = foo()
-    # Evaluate the tensor `c`.
+    if preprocess:
+        assert raw_test_loc and not test_loc and scalers_loc
+        do_preprocess(raw_test_loc, workdir=workdir,
+                                    scalers_loc=scalers_loc)
+    else:
+        assert test_loc and not raw_test_loc and not scalers_loc
+
     steplosses = mv.perf_wrapper(modelloc,
             dataloc=test_loc,
             eager=True,
             batch_size=int(kwargs['batch_size']),
             labeled=labeled,
             parallel=kwargs['parallel'],
-            workdir=kwargs['work_dir'])
+            workdir=workdir)
 
     return steplosses
+
+
+def do_preprocess(raw_test_loc, workdir, scalers_loc):
+    df = pd.read_csv(raw_test_loc).sort_values(by='time')
+
+    scalers = joblib.load(scalers_loc)
+
+    featurecols = ['r', 'ecg', 'gsr',  
+              'eeg_fp1','eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', ] 
+    mu.make_test_data(df, 
+            window_size=64, 
+            row_batch_size=10000, 
+            feature_cols=featurecols, 
+            save_dir=workdir)
+
+    #
+    finalloc = f'{workdir}/finaltest.h5'
+    testloc = ?
+    mu.apply_scalers(finalloc, 
+               datasets=[x for x in mu.h5_keys(testloc) 
+                           if '_X' in x],
+               scaler=scalers,
+               outloc=f'{workdir}/finaltest_scaled.h5')
+    finalscaledloc = f'{workdir}/finaltest_scaled.h5'
+
+    mu.transfer(source_location=finalloc, 
+            source_datasets=[x for x in mu.h5_keys(finalloc) 
+                               if '_IX' in x], 
+            save_location=finalscaledloc)
+
+
+def final_delete():
+    pass
 
 
 def do():
