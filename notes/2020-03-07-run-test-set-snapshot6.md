@@ -1003,7 +1003,7 @@ import joblib
 workdir = 'data/2020-03-15T2032Z'
 finalloc = f'{workdir}/finaltest.h5'
 mu.apply_scalers(finalloc, 
-               datasets=[x for x in mu.h5_keys(testloc) 
+               datasets=[x for x in mu.h5_keys(finalloc) 
                            if '_X' in x],
                scaler=scaler,
                outloc=f'{workdir}/finaltest_scaled.h5')
