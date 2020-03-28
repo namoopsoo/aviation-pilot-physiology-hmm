@@ -148,7 +148,6 @@ def eager_predict(kwargs):
     combine_preds(workdir)
     final_delete(workdir)
 
-
     return steplosses
 
 
@@ -158,7 +157,8 @@ def combine_preds(workdir):
 
     predsdf = pd.concat([pd.read_csv(x, index_col=None)
                         for x in files])
-    predsdf.to_csv(f'{workdir}/crewseat.blah.csv', index=False)
+    predsdf.to_csv(f'{workdir}/{mu.quickts()}-crewseat-preds.csv',
+                    index=False)
     # df.to_csv(outfile, index=False, float_format='%.1f')
 
 

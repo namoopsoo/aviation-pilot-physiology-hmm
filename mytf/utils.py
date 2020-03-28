@@ -32,8 +32,13 @@ ALL_FEATURE_COLS = ['eeg_fp1', 'eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', 'eeg_t5',
 def timestamp():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
 
+
 def quickts():
     return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime('%Y-%m-%dT%H%M%SZ')
+
+
+def getts():
+    return quickts()
 
 
 def convert_nans(y):
