@@ -124,7 +124,6 @@ def eager_predict(kwargs):
     scalers_loc = kwargs.get('scalers_loc')
     workdir = kwargs['work_dir']
 
-    import ipdb ; ipdb.set_trace();
 
     if preprocess:
         assert raw_test_loc and not test_loc and scalers_loc
@@ -144,7 +143,6 @@ def eager_predict(kwargs):
             parallel=kwargs['parallel'],
             workdir=workdir)
 
-    # TODO ... combine those csv files....
     combine_preds(workdir)
     final_delete(workdir)
 
@@ -152,14 +150,16 @@ def eager_predict(kwargs):
 
 
 def combine_preds(workdir):
-    files = [x for x in os.listdir(workdir)
+    files = [f'{workdir}/{x}' for x in os.listdir(workdir)
             if x.startswith('preds')] 
 
     predsdf = pd.concat([pd.read_csv(x, index_col=None)
                         for x in files])
+    predsdf.id = predsdf.id.map(lambda x: int(x))
     predsdf.to_csv(f'{workdir}/{mu.quickts()}-crewseat-preds.csv',
                     index=False)
-    # df.to_csv(outfile, index=False, float_format='%.1f')
+
+    [os.remove(x) for x in files]
 
 
 def do_preprocess(raw_test_loc, workdir, scalers_loc):
@@ -196,10 +196,6 @@ def final_delete(workdir):
     finalscaledloc = f'{workdir}/finaltest_scaled.h5'
     os.remove(finalloc)
     os.remove(finalscaledloc)
-
-
-
-
 
 
 def do():
