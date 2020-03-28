@@ -124,13 +124,17 @@ def eager_predict(kwargs):
     scalers_loc = kwargs.get('scalers_loc')
     workdir = kwargs['work_dir']
 
+    import ipdb ; ipdb.set_trace();
 
     if preprocess:
         assert raw_test_loc and not test_loc and scalers_loc
         do_preprocess(raw_test_loc, workdir=workdir,
                                     scalers_loc=scalers_loc)
+        # This file is created in the preprocessing
+        test_loc = f'{workdir}/finaltest_scaled.h5'
     else:
         assert test_loc and not raw_test_loc and not scalers_loc
+
 
     steplosses = mv.perf_wrapper(modelloc,
             dataloc=test_loc,
