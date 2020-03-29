@@ -215,7 +215,48 @@ Out[158]: False
 
 
 ```
+* ok just fill it based on the way files are laid naturally.. with `backfill` 
+```
+files = [f'{workdir}/{x}' for x in os.listdir(workdir)
+        if 'crewseat-preds-test' in x]
+
+predsdf = pd.concat([pd.read_csv(x, index_col=None)
+                        for x in files]
+          ).drop_duplicates(subset='id')
+
+fulldf = pd.DataFrame({'id': list(range(MAX))})
+senddf = fulldf.merge(predsdf, how='left', on='id'
+            ).fillna(method='backfill'
+            ).fillna(method='ffill'
+            ).sort_values(by='id'
+            ).rename(columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D'})
+for k in ['A', 'B', 'C', 'D']:
+    senddf[k] = senddf[k].map(lambda x: max(0, x))
+senddf.to_csv(f'{workdir}/{mu.getts()}-sendit.csv', index=False)
 
 
+```
+* I had initially only used the `.fillna(method='backfill')` which meant the very last row was still null,
+* I submitted that to Kaggle, but got an error about it. Since by definition the last row has no leading row to backfill from.
+* So I added a `ffill` forward fill as well.. going to resubmit
+
+```
+17965141,1.7,-0.8,-2.0,1.2
+17965142,-0.0,0.1,-0.2,0.0
+17965143,,,,
+```
+* ok now i have 
+
+```
+id,A,B,C,D
+0,-0.3,-0.1,-0.0,-0.1
+1,-0.3,-0.1,-0.0,-0.1
+2,-0.3,-0.1,-0.0,-0.1
+3,-0.3,-0.1,-0.0,-0.1
+...
+17965140,-0.0,0.1,-0.2,0.0
+17965141,1.7,-0.8,-2.0,1.2
+17965142,-0.0,0.1,-0.2,0.0
+```
 
 
