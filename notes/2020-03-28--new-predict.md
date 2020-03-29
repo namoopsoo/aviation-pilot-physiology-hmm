@@ -377,4 +377,14 @@ predsdf = pd.concat([pd.read_csv(x, index_col=None)
 
 * 18:22 ... trying just small one for now . ^^
 
+#### awk approach.... 
+```
+cat data/2020-03-15T2032Z/header-row.csv > data/2020-03-15T2032Z/2020-03-29T2252Z-sendit-n.csv
+
+time cat data/2020-03-15T2032Z/2020-03-29T223033Z-argmaxdf.csv | awk -F ',' '{ if ($2 == 0){ print $1 "," "1,0,0,0" } \
+              else if  ($2 == 1){ print $1 "," "0,1,0,0" } \
+              else if  ($2 == 2){ print $1 "," "0,0,1,0" } \
+              else if  ($2 == 3){ print $1 "," "0,0,0,1" } }' >> data/2020-03-15T2032Z/2020-03-29T2252Z-sendit-n.csv
+
+```
 
