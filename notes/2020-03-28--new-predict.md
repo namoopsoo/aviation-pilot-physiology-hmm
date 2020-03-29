@@ -118,8 +118,103 @@ Out[115]: (16452699, 5)
 
 In [116]: 16452699 - 16451183                                                                                                      
 Out[116]: 1516
-```
 
+predsdf.groupby(by='id').size().reset_index()
+countsdf = predsdf.groupby(by='id').size().reset_index().rename(columns={0: 'count'})
+countsdf[countsdf['count'] > 1].shape
+# Out[121]: (1515, 2)
+
+countsdf[countsdf['count'] > 1].merge(predsdf,  how='left', on='id')
+
+In [122]: countsdf[countsdf['count'] > 1].merge(predsdf,  how='left', on='id').shape                                               
+Out[122]: (3031, 6)
+
+# ok looked at the dupes and they are all the same somehow. 
+In [123]: countsdf[countsdf['count'] > 1].merge(predsdf,  how='left', on='id').to_csv('data/2020-03-15T2032Z/dupesdf.csv')         
+```
+* ok then look at gaps ..
+```python
+senddf.drop_duplicates(subset='id')
+
+In [125]: senddf.drop_duplicates(subset='id').shape, senddf.shape                                                                  
+Out[125]: ((17965143, 5), (17966659, 5))
+
+
+In [126]: senddf.drop_duplicates(subset='id').to_csv('data/2020-03-15T2032Z/senddf.csv')                                           
+
+# observing some of the gaps...
+
+In [130]: senddf[senddf['0'].isnull()].shape                                                                                       
+Out[130]: (1513964, 5)
+
+
+```
+* VIsual inspection of the nulls... 
+```
+580861
+779168
+
+nulls = senddf[senddf['0'].isnull()].id.tolist()
+
+In [144]: senddf.drop_duplicates(subset='id').id.tolist() == fulldf.id.tolist()                                                    
+Out[144]: True
+```
+* not sure why there are nulls like this ...
+```python
+In [147]: senddf[senddf.id > 580851].iloc[:10]                                                                                     
+Out[147]: 
+            id    0    1    2    3
+580905  580852  2.5 -1.9 -2.2  1.8
+580906  580853  NaN  NaN  NaN  NaN
+580907  580854  2.5 -1.9 -2.2  1.8
+580908  580855  NaN  NaN  NaN  NaN
+580909  580856  2.5 -1.9 -2.2  1.8
+580910  580857  NaN  NaN  NaN  NaN
+580911  580858  2.5 -1.9 -2.2  1.8
+580912  580859  NaN  NaN  NaN  NaN
+580913  580860  2.5 -1.9 -2.2  1.8
+580914  580861  NaN  NaN  NaN  NaN
+```
+* But I grepped my original data files and that id is not missing...
+```
+$ egrep '^580853' data/test-crew*
+data/test-crew-1_seat-1.csv:580853,1,LOFT,2018.47656250,1,0.0,0.0,-0.000488,-0.000244,0.0,0.000244,0.000244,0.000244,0.000244,0.000244,1.10181,-0.000244,0.016602000000000002,0.0,0.000244,0.0,0.000122,0.0,0.001221,2958.639893,-6261.25,827.987976,0.0
+```
+* Ok, is it in the output prediction df?
+
+```
+580853 dfs['-test-crew-1_seat-1']
+
+In [150]: dfs['-test-crew-1_seat-1'].id.tolist()[:4]                                                                               
+Out[150]: [1044255, 1044257, 1044259, 1044261]
+
+In [151]: 1044259 in dfs['-test-crew-1_seat-1'].id.tolist()[:4]                                                                    
+Out[151]: True
+
+In [152]: 580853 in dfs['-test-crew-1_seat-1'].id.tolist()[:4]                                                                     
+Out[152]: False
+
+
+```
+```
+$ wc data/test-crew-1_seat-1.csv
+ 1037808 1037808 288736415 data/test-crew-1_seat-1.csv
+```
+```
+In [155]: dfs['-test-crew-1_seat-1'].shape, dfs['-test-crew-1_seat-1'].id.unique().shape                                           
+Out[155]: ((978226, 5), (978134,))
+```
+* umm, `59674 = 1037808 - 978134`  , the number missing may be related to my batching..
+
+* This is pretty weird though... might help explain things. Sorting by time is not sorting by id... so what the faack? 
+```
+In [156]: df11 = pd.read_csv('data/test-crew-1_seat-1.csv')                                                                        
+
+In [158]: df11.sort_values(by='id').id.tolist() == df11.sort_values(by='time').id.tolist()                                         
+Out[158]: False
+
+
+```
 
 
 
