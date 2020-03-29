@@ -230,8 +230,28 @@ senddf = fulldf.merge(predsdf, how='left', on='id'
             ).fillna(method='ffill'
             ).sort_values(by='id'
             ).rename(columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D'})
+            
 for k in ['A', 'B', 'C', 'D']:
     senddf[k] = senddf[k].map(lambda x: max(0, x))
+    
+senddf['argmax'] = pd.DataFrame(senddf.iloc[9:11].apply(
+
+                    np.array(lambda x: [int(x.id)] + {0: [1, 0, 0, 0],
+                             1: [0, 1, 0, 0],
+                             2: [0, 0, 1, 0],
+                             3: [0, 0, 0, 1],}.get(np.argmax([x.A, x.B, x.C, x.D]))), axis=1),
+                             columns=['id', 'A', 'B', 'C', 'D'])
+#
+normsenddf = senddf.apply(
+                   lambda x: {
+                           0: pd.Series({'id': int(x.id), 'A': 1, 'B': 0, 'C': 0, 'D': 0}),
+                           1: pd.Series({'id': int(x.id), 'A': 0, 'B': 1, 'C': 0, 'D': 0}),
+                           2: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 1, 'D': 0}),
+                           3: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 0, 'D': 1}),
+                   }.get(np.argmax([x.A, x.B, x.C, x.D])), axis=1)
+
+
+    
 senddf.to_csv(f'{workdir}/{mu.getts()}-sendit.csv', index=False)
 
 
@@ -258,5 +278,50 @@ id,A,B,C,D
 17965141,1.7,-0.8,-2.0,1.2
 17965142,-0.0,0.1,-0.2,0.0
 ```
+* 
+```
+for k in ['A', 'B', 'C', 'D']:
+    senddf[k] = senddf[k].map(lambda x: max(0, x))
+    
+senddf['argmax'] = pd.DataFrame(senddf.iloc[9:11].apply(
+
+                    np.array(lambda x: [int(x.id)] + {0: [1, 0, 0, 0],
+                             1: [0, 1, 0, 0],
+                             2: [0, 0, 1, 0],
+                             3: [0, 0, 0, 1],}.get(np.argmax([x.A, x.B, x.C, x.D]))), axis=1),
+                             columns=['id', 'A', 'B', 'C', 'D'])
+```
+
+#### ... fuller 
+```python
+files = [f'{workdir}/{x}' for x in os.listdir(workdir)
+        if 'crewseat-preds-test' in x]
+
+predsdf = pd.concat([pd.read_csv(x, index_col=None)
+                        for x in files]
+          ).drop_duplicates(subset='id')
+
+fulldf = pd.DataFrame({'id': list(range(MAX))})
+senddf = fulldf.merge(predsdf, how='left', on='id'
+            ).fillna(method='backfill'
+            ).fillna(method='ffill'
+            ).sort_values(by='id'
+            ).rename(columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D'})
+            
+
+#
+normsenddf = senddf.apply(
+                   lambda x: {
+                           0: pd.Series({'id': int(x.id), 'A': 1, 'B': 0, 'C': 0, 'D': 0}),
+                           1: pd.Series({'id': int(x.id), 'A': 0, 'B': 1, 'C': 0, 'D': 0}),
+                           2: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 1, 'D': 0}),
+                           3: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 0, 'D': 1}),
+                   }.get(np.argmax([x.A, x.B, x.C, x.D])), axis=1)
 
 
+    
+normsenddf.to_csv(f'{workdir}/{mu.getts()}-sendit.csv', index=False)
+
+
+
+```
