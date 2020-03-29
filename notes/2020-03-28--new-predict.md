@@ -294,12 +294,16 @@ senddf['argmax'] = pd.DataFrame(senddf.iloc[9:11].apply(
 
 #### ... fuller 
 ```python
+import pandas as pd
+
+workdir = 'data/2020-03-15T2032Z'   
 files = [f'{workdir}/{x}' for x in os.listdir(workdir)
         if 'crewseat-preds-test' in x]
 
 predsdf = pd.concat([pd.read_csv(x, index_col=None)
                         for x in files]
           ).drop_duplicates(subset='id')
+MAX = 17965143
 
 fulldf = pd.DataFrame({'id': list(range(MAX))})
 senddf = fulldf.merge(predsdf, how='left', on='id'
@@ -307,9 +311,29 @@ senddf = fulldf.merge(predsdf, how='left', on='id'
             ).fillna(method='ffill'
             ).sort_values(by='id'
             ).rename(columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D'})
-            
 
+%%time
+senddf['argmax'] = senddf.apply(lambda x: np.argmax([x.A, x.B, x.C, x.D]), axis=1)
 #
+In [12]: %%time 
+    ...: senddf['argmax'] = senddf.apply(lambda x: np.argmax([x.A, x.B, x.C, x.D]), axis=1) 
+    ...: #                                                                                                                      
+CPU times: user 24min 16s, sys: 8.07 s, total: 24min 24s
+Wall time: 24min 33s
+
+In [13]: senddf['argmax'].value_counts()                                                                                           
+Out[13]: 
+0    13292040
+1     3836332
+2      688643
+3      148128
+Name: argmax, dtype: int64
+
+
+
+
+# 
+
 normsenddf = senddf.apply(
                    lambda x: {
                            0: pd.Series({'id': int(x.id), 'A': 1, 'B': 0, 'C': 0, 'D': 0}),
@@ -317,11 +341,40 @@ normsenddf = senddf.apply(
                            2: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 1, 'D': 0}),
                            3: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 0, 'D': 1}),
                    }.get(np.argmax([x.A, x.B, x.C, x.D])), axis=1)
-
-
     
 normsenddf.to_csv(f'{workdir}/{mu.getts()}-sendit.csv', index=False)
+```
 
+
+
+* One file at atime....
+```
+import os
+import pandas as pd
+from tqdm import tqdm
+workdir = 'data/2020-03-15T2032Z'   
+files = [f'{workdir}/{x}' for x in os.listdir(workdir)
+        if 'crewseat-preds-test' in x]
+for file in tqdm(files):
+    df = pd.read_csv(file, index_col=None
+        ).rename(columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D'})
+
+    newfile = f'{workdir}/normalized/normed-{file.split("/")[-1]}'
+    newdf = df.apply(
+                   lambda x: {
+                           0: pd.Series({'id': int(x.id), 'A': 1, 'B': 0, 'C': 0, 'D': 0}),
+                           1: pd.Series({'id': int(x.id), 'A': 0, 'B': 1, 'C': 0, 'D': 0}),
+                           2: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 1, 'D': 0}),
+                           3: pd.Series({'id': int(x.id), 'A': 0, 'B': 0, 'C': 0, 'D': 1}),
+                   }.get(np.argmax([x.A, x.B, x.C, x.D])), axis=1)
+    newdf.to_csv()
+predsdf = pd.concat([pd.read_csv(x, index_col=None)
+                        for x in files]
+          ).drop_duplicates(subset='id')
 
 
 ```
+
+* 18:22 ... trying just small one for now . ^^
+
+
