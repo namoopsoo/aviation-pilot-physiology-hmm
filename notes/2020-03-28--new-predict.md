@@ -28,6 +28,13 @@ time python predict.py --raw-test-loc data/test-crew-1_seat-0.csv \
 
 ```
 [Parallel(n_jobs=4)]: Done 105 out of 105 | elapsed:  3.8min finished
+... 
+also changed to using -1 workers...
+[Parallel(n_jobs=-1)]: Done  95 out of  95 | elapsed:  3.0min finished
+, with the whole thing:
+real	5m20.408s
+user	25m30.651s
+sys	3m7.183s
 
 ```
 * so first one ... , was `test-crew-1_seat-0`  
@@ -45,9 +52,9 @@ time python predict.py --raw-test-loc data/test-crew-1_seat-1.csv \
         --eager  
 ```
 
-* NEXT : test-crew-3_seat-1.csv
+* NEXT : test-crew-4_seat-0.csv
 ```
-time python predict.py --raw-test-loc data/test-crew-3_seat-1.csv \
+time python predict.py --raw-test-loc data/test-crew-4_seat-0.csv \
         --batch-size 1024 \
         --model-loc history/2020-02-16T035758Z/epoch_001_batch_01760_model.h5 \
         --scalers-loc history/2020-02-02T044441Z/scalers.joblib \
@@ -58,7 +65,6 @@ time python predict.py --raw-test-loc data/test-crew-3_seat-1.csv \
 ```
 * ...
 ```
-test-crew-4_seat-0.csv
 test-crew-4_seat-1.csv
 test-crew-5_seat-0.csv
 test-crew-5_seat-1.csv
