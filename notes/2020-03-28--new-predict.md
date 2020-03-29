@@ -45,6 +45,33 @@ time python predict.py --raw-test-loc data/test-crew-1_seat-1.csv \
         --eager  
 ```
 
+* NEXT : test-crew-3_seat-1.csv
+```
+time python predict.py --raw-test-loc data/test-crew-3_seat-1.csv \
+        --batch-size 1024 \
+        --model-loc history/2020-02-16T035758Z/epoch_001_batch_01760_model.h5 \
+        --scalers-loc history/2020-02-02T044441Z/scalers.joblib \
+        --work-dir data/2020-03-15T2032Z \
+        --preprocess \
+        --parallel \
+        --eager  
+```
+* ...
+```
+test-crew-4_seat-0.csv
+test-crew-4_seat-1.csv
+test-crew-5_seat-0.csv
+test-crew-5_seat-1.csv
+test-crew-6_seat-0.csv
+test-crew-6_seat-1.csv
+test-crew-7_seat-0.csv
+test-crew-7_seat-1.csv
+test-crew-8_seat-0.csv
+test-crew-8_seat-1.csv
+test-crew-13_seat-0.csv
+test-crew-13_seat-1.csv
+```
+
 
 
 
