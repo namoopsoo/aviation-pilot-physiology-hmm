@@ -59,9 +59,15 @@ to see what happens and sure enough, per the [validation loss](https://github.co
 #### Active Learning: changing the training approach 
 Somehow I came upon the idea of preferentially training on what your model is doing poorly on. So on [2020-01-19](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--update.md)  I modified my training loop so that I dynamically adjusted my training weights according to which class was being misclassified. The effect on the [training loss](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--update.md#plotting-train-loss-now-and-per-label-losses-too) was really interesting. Everything was way smoother.
 
-Looking at a training loss plot from earlier ... [ADD EARLIER TRAIN LOSS PLOT] ... 
+Looking at a training loss plot from earlier ...  ...    ( such as from [earlier](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-28.md#crashed-last-batch-but-thats-okay)  )
 
-Compared to the training loss plot here ... [ADD PLOT]
+![png](2019-12-28_files/2019-12-28_12_1.png)  << [ADD EARLIER TRAIN LOSS PLOT]
+
+
+Compared to the training loss plot here ... and looking at the combined and per-class training batch losses...
+![png](2020-01-19--update_files/2020-01-19--update_10_0.png)
+
+![png](2020-01-19--update_files/2020-01-19--update_10_2.png)   << [ADD PLOT]
 
 The validation loss was still favoring that one class, but I decided to hold on to this technique and keep trying other things.
 
