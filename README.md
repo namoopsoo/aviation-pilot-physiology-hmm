@@ -2,7 +2,7 @@
 A look at this physiological data kaggle from [earlier this year](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/data).
 
 ### Notes
-- [My High Level Recap](#below)
+- [My High Level Recap](#my-high-level-recap)
 - [_Initial look_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md)
 - [_Test driving TensorFlow with the fashion hello world_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-13--keras-hello-world-fashion.ipynb)
 - [_Wrangling time data_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-14-wrangling-time-data.md)
