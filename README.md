@@ -40,3 +40,11 @@ At one point I was at the Boston Amtrak terminal waiting for my bus, getting dee
 
 At the end of the day I think of all of the amazing things I could one day do with this kind of technology, such as classifying music or building a chat bot (maybe even one that can tell jokes).
 
+
+### Pocket glossary
+* Kaggle.com is a website where you can compete at solving data science problems with a model that has the lowest loss.
+* LSTMs or Long Short Term Memory "networks" are a type of recurrent neural networks which are better with patterns which require more information from the past.
+* matplotlib is a software package for plotting data.
+* Recurrent Neural Networks (RNNs) are neural networks which can learn "sequences" of data.
+* TensorFlow is a software package which provides implementations of neural net algorithms for solving image classification, natural language and other similar problems which classical machine learning algorithms like logistic regression struggle with.
+
