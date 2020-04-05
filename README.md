@@ -42,9 +42,11 @@ At the end of the day I think of all of the amazing things I could one day do wi
 
 
 ### Pocket glossary
+* Jupyter notebooks are to data science(s) what paper bound lab notebooks are to physical sciences (physics? chemistry?).
 * Kaggle.com is a website where you can compete at solving data science problems with a model that has the lowest loss.
 * LSTMs or Long Short Term Memory "networks" are a type of recurrent neural networks which are better with patterns which require more information from the past.
 * matplotlib is a software package for plotting data.
+* numpy is a software package for more easily performing linear algebra transformations and asking statistical questions of your data.
 * Recurrent Neural Networks (RNNs) are neural networks which can learn "sequences" of data.
 * TensorFlow is a software package which provides implementations of neural net algorithms for solving image classification, natural language and other similar problems which classical machine learning algorithms like logistic regression struggle with.
 
