@@ -44,3 +44,16 @@ Per my [notebook entry](https://github.com/namoopsoo/aviation-pilot-physiology-h
 
 At this point I think I was realizing that the order of ideas to try matters. And you do not know in advance what is the best order. Perhaps the weight initialization matters a good deal, but I had not yet found the critical next step yet at that point.
 
+#### Class balance
+In my [next notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-18.md) I wanted to understand why my `class 1` kept getting favored. I tried out [forcing the weights](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-18.md#force-weights) of my training data to basically 
+
+```
+{0: 1., 1: 0., 2: 0., 3: 0.}
+```
+
+to see what happens and sure enough, per the [validation loss](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-18.md#validation-loss) , the loss now went down only for class `0`. So the effect was controlled. 
+
+![png](2020-01-18_files/2020-01-18_11_4.png)
+
+
+
