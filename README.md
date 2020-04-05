@@ -2,6 +2,7 @@
 A look at this physiological data kaggle from [earlier this year](https://www.kaggle.com/c/reducing-commercial-aviation-fatalities/data).
 
 ### Notes
+- [My High Level Recap](#below)
 - [_Initial look_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md)
 - [_Test driving TensorFlow with the fashion hello world_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-13--keras-hello-world-fashion.ipynb)
 - [_Wrangling time data_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-14-wrangling-time-data.md)
@@ -17,3 +18,5 @@ A look at this physiological data kaggle from [earlier this year](https://www.ka
 - [Using h5py](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-01-batch-train.md) for data now [and plotting my logloss per class](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-08-.md) .
 - [Really nice MinMaxScaler partial fit approach](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-21--update.md)
 
+### My High Level Recap
+This physiology data classification challenge    
