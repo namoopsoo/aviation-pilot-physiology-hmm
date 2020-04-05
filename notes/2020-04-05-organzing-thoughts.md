@@ -30,6 +30,11 @@ At a [later date](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blo
 
 
 
+#### More epochs?
+On [2018-12-28](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-28-two.md) I got curious about whether just  throwing more data at this problem would help. So I extended my waiting time by `two` and let the training happen in two *epochs* . The validation loss [from here](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-28-two-plot.md#final-validation-logloss-plot)  , (reposting...) however showed that throwing more data is not always the answer. It always depends haha.
+
+![png](2019-12-28-two-plot_files/2019-12-28-two-plot_9_1.png)
+
 
 
 
