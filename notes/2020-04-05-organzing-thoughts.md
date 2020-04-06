@@ -82,9 +82,11 @@ In [validation](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/
 
 ![png](2020-02-01_files/2020-02-01_46_14.png) 
 
+I took that further in [this 2020-02-08 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-08-take2--update--2.md) and ( _showing my figure again_ ) going 3 epochs instead, I got ..
 
-https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-08-take2--update--2.md
+![png](2020-02-08-take2--update--2_files/2020-02-08-take2--update--2_11_1.png)
 
+So the bright side I take from this is that the validation loss is actually doing better for three out of four of the classes.
 
 https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-15.md
 
