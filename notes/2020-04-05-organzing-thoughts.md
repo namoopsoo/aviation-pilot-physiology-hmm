@@ -59,24 +59,29 @@ to see what happens and sure enough, per the [validation loss](https://github.co
 #### Active Learning: changing the training approach 
 Somehow I came upon the idea of preferentially training on what your model is doing poorly on. So on [2020-01-19](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--update.md)  I modified my training loop so that I dynamically adjusted my training weights according to which class was being misclassified. The effect on the [training loss](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--update.md#plotting-train-loss-now-and-per-label-losses-too) was really interesting. Everything was way smoother.
 
-Looking at a training loss plot from earlier ...  ...    ( such as from [earlier](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-28.md#crashed-last-batch-but-thats-okay)  )
+Looking at a training loss plot from earlier ( such as from [2019-12-28](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-28.md#crashed-last-batch-but-thats-okay)  )
 
-![png](2019-12-28_files/2019-12-28_12_1.png)  << [ADD EARLIER TRAIN LOSS PLOT]
-
-
-Compared to the training loss plot here ... and looking at the combined and per-class training batch losses...
+![png](2019-12-28_files/2019-12-28_12_1.png)  , it shows the batch loss is all over the place. That makes perferct sense perhaps, because each batch I have been using in stochastic gradient descent really is from all over the training data. And compared to the training loss plot for the two figures below (extracted from my [2020-01-19 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--update.md) ) the combined and per-class training batch losses  are way more stable looking. 
 ![png](2020-01-19--update_files/2020-01-19--update_10_0.png)
 
-![png](2020-01-19--update_files/2020-01-19--update_10_2.png)   << [ADD PLOT]
+![png](2020-01-19--update_files/2020-01-19--update_10_2.png)  
 
 The validation loss was still favoring that one class, but I decided to hold on to this technique and keep trying other things.
 
-#### ...
-answering some questions around how well does my training mini batch loss compare to the full training set loss 
-https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--more-test-evaluate-train.md
+#### Full training set error
+Next in [this notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-01-19--more-test-evaluate-train.md) I wanted to better answer whether my particular test set perhaps had some very different size data compared to my training set, which was blowing up my test set error. I did not have enough data to better split apart my data at the moment actually, but instead I took a quick detour to compare my training mini batch loss curves to the full training set losses, during training. Naturally one would expect that if batch training losses improve that overall training set loss should also improve. Per the below diagram from my notebook, that was indeed the case.
 
-shuffle train+ test ... 
-https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-01.md
+![png](2020-01-19--more-test-evaluate-train_files/2020-01-19--more-test-evaluate-train_12_4.png)
+
+#### Shuffling train/test 
+After having consistently weird results with validation error, I decided to try re-building my train/test sets by doing a full random shuffle instead, in my [2020-02-01 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-01.md). Up until this point I had been using the fact that the data is divided into `crew1, crew2, crew3, etc` and I have used `crew1` for train and `crew2` for test. And I had built `scalers` from my `crew1` training data, applying them to the the `crew2` test data. 
+
+So this time around I instead built `scalers` from `crew1` and then changed my function, `build_many_scalers_from_h5` to take `scalers` as a parameter and I kept updating them with the test data. ( My scalers `'history/2020-02-02T044441Z/scalers.joblib'` was the restulting artifact). 
+
+In [validation](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-01.md#final-chart) , I think for the first time, I saw the validation error actually start going down ,  
+
+![png](2020-02-01_files/2020-02-01_46_14.png) 
+
 
 https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-08-take2--update--2.md
 
