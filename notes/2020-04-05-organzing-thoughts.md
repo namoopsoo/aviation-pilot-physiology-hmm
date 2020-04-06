@@ -88,6 +88,14 @@ I took that further in [this 2020-02-08 notebook](https://github.com/namoopsoo/a
 
 So the bright side I take from this is that the validation loss is actually doing better for three out of four of the classes.
 
+#### Reconsider that high dropout
+Next in [2020-02-15 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-15.md), I decided to reduce my dropout slightly, after reading through [this post](https://machinelearningmastery.com/use-dropout-lstm-networks-time-series-forecasting/) about treating the dropout as yet another hyperparameter.  After retraining , across 2 epochs, I saw a validation loss curve, which looked better still. 
+
+
+![png](2020-02-15_files/2020-02-15_10_44.png)
+
+This indicates perhaps the context of hyperparameters being experimented with indeed matters . I think Andrew Ng's characterization of _"model babysitting"_.
+
 https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-15.md
 
 
