@@ -1,15 +1,15 @@
-import tensorflow as tf
 import json
 import datetime
 import itertools
 import math
 import pytz
 import h5py
+import time
 from copy import deepcopy
 import numpy as np
 from functools import reduce
 from tensorflow import keras
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 from collections import Counter
@@ -17,20 +17,34 @@ from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 
+import tensorflow as tf
+
+# tf.train.AdamOptimizer is deprecated. Please use tf.compat.v1.train.AdamOptimizer instead.
+# The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use 
+from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy
+from tensorflow.compat.v1.train import AdamOptimizer
+
+
+
 ALL_FEATURE_COLS = ['eeg_fp1', 'eeg_f7', 'eeg_f8', 'eeg_t4', 'eeg_t6', 'eeg_t5', 'eeg_t3', 'eeg_fp2', 'eeg_o1', 'eeg_p3', 'eeg_pz', 'eeg_f3', 'eeg_fz', 'eeg_f4', 'eeg_c4', 'eeg_p4', 'eeg_poz', 'eeg_c3', 'eeg_cz', 'eeg_o2', 'ecg', 'r', 'gsr',]
 
 
 def timestamp():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S EST')
 
+
 def quickts():
     return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime('%Y-%m-%dT%H%M%SZ')
+
+
+def getts():
+    return quickts()
 
 
 def convert_nans(y):
     return np.vectorize(lambda x: 0 if np.isnan(x) else x)(y)
 
-def tf_f1_score(y_true, y_pred, method=None):
+def tf_f1_score(y_true, y_pred):
     """Computes 3 different f1 scores, micro macro
     weighted.
     micro: f1 score accross the classes, as 1
@@ -171,18 +185,18 @@ def helper_build_dataset_weighty_v3(arrays, target_indices, class_weights,
 
         if 'y_train' in arrays:
             y_train = arrays['y_train'][part, :]
-            class_counts = tf.reduce_sum(y_train, axis=0)
+            # class_counts = tf.reduce_sum(y_train, axis=0)
             labels = np.argmax(y_train, axis=1)
         elif 'ylabels_train' in arrays:
             labels = arrays['ylabels_train'][part]
             adict = dict(Counter(labels))
-            class_counts = [adict.get(i, 0) for i in [0, 1, 2, 3]]
+            # class_counts = [adict.get(i, 0) for i in [0, 1, 2, 3]]
             
         #print(Counter(labels))
         label_vec.append(labels)
 
-        weights_per_class = np.array([class_weights[x] for x in range(4)]
-                )/class_counts
+        #weights_per_class = np.array([class_weights[x] for x in range(4)]
+        #        )/class_counts
         #assert(abs(1.0 - tf.reduce_sum(class_counts*weights_per_class))
         #        < 0.0001)
 
@@ -233,35 +247,76 @@ def shrink_dataset_subset(arrays, train_target_indices,
             #'y_test_original': arrays['y_test_original'][test_target_indices],
             }
 
+def weights_for_losses(losses):
+    weights = tf.keras.backend.softmax(
+            losses,
+            axis=-1)
+    return {k: weights[k] for k in range(4)}
 
-def do_train(model, dataset_batches, k, saveloc):
-    optimizer = tf.train.AdamOptimizer()
+    
+
+
+def do_train(model, dataset_batches, k, epochs=None,
+                                        num_epochs=None,
+                                        optimizer_params=None, saveloc=None):
+    optimizer = AdamOptimizer(**optimizer_params)
 
     loss_history = []
+    label_losses_history = []
 
-    for (batch, (invec, labels, weights)) in tqdm(enumerate(dataset_batches.take(k))):
+    if num_epochs:
+        epochs = range(num_epochs)
 
-        with tf.GradientTape() as tape:
-            logits = model(invec, training=True)
-            loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits, weights=weights)
+    #weights = tf.constant(np.ones((32, 1)))
+    weights_dict = {0: 1., 1: 1., 2: 1., 3:1.}
+    for epoch in epochs:
 
-        loss_history.append(loss_value.numpy())
-        grads = tape.gradient(loss_value, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.compat.v1.train.get_or_create_global_step())
+        for (batch, (invec, labels, _)) in enumerate(tqdm(dataset_batches.take(k))):
+            if labels.shape[0] < 32:
+                continue
+            weights = np.array([weights_dict[labels[i].numpy()] for i in range(32)])
 
-        save_model(model, f'{saveloc}/{str(batch).zfill(5)}_model.h5')
-        to_json_local([float(x) for x in loss_history],
-                f'{saveloc}/{str(batch).zfill(5)}_train_loss_history.json')
+
+            # NOTE: is this tape in the right place?
+            with tf.GradientTape() as tape:
+                logits = model(invec, training=True)
+                loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
+
+                indices_vec = [ [ i for i in range(32) if labels[i].numpy() == label ] 
+                        for label in [0, 1, 2, 3] ]
+
+                losses = [
+                        sparse_softmax_cross_entropy(labels.numpy()[indices],
+                            logits.numpy()[indices],
+                            weights=weights[indices])
+
+                        for indices in indices_vec
+                        ]
+                weights_dict = weights_for_losses(losses)
+
+            loss_history.append(loss_value.numpy())
+            label_losses_history.append([x.numpy() for x in losses])
+            grads = tape.gradient(loss_value, model.trainable_variables)
+            optimizer.apply_gradients(zip(grads, model.trainable_variables),
+                                    global_step=tf.compat.v1.train.get_or_create_global_step())
+
+            prefix = (f'{saveloc}/epoch_{str(epoch).zfill(3)}'
+                               f'_batch_{str(batch).zfill(5)}')
+
+            if batch % 10 == 0:
+                save_model(model, (f'{prefix}_model.h5'))
+
+                to_json_local(loss_history,
+                            f'{prefix}_train_loss_history.json')
+
+                to_json_local(label_losses_history,
+                            f'{prefix}_train_label_losses_history.json')
 
     return loss_history
 
-def to_json_local(data, loc):
-    with open(loc, 'w') as fd:
-        json.dump(data, fd)
 
 def do_train_noweights(model, dataset_batches):
-    optimizer = tf.train.AdamOptimizer()
+    optimizer = AdamOptimizer()
 
     loss_history = []
 
@@ -269,7 +324,7 @@ def do_train_noweights(model, dataset_batches):
 
         with tf.GradientTape() as tape:
             logits = model(invec, training=True)
-            loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+            loss_value = sparse_softmax_cross_entropy(labels, logits)
 
         loss_history.append(loss_value.numpy())
         grads = tape.gradient(loss_value, model.trainable_variables)
@@ -281,32 +336,32 @@ def do_train_noweights(model, dataset_batches):
 
 
 
-def do_train_f1_loss(model, dataset_batches):
-    optimizer = tf.train.AdamOptimizer()
-
-    loss_history = []
-
-    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(1000)):
-
-        with tf.GradientTape() as tape:
-            logits = model(invec, training=True)
-
-            original_loss_value = tf.losses.sparse_softmax_cross_entropy(labels, logits, weights=weights)
-
-            micro, macro, weighted, f1 = tf_f1_score(
-                    one_hot(labels, convert=True),
-                    one_hot(np.argmax(logits, axis=1), convert=False),
-
-                    )
-            loss_value = macro
-
-
-        loss_history.append(loss_value.numpy())
-        grads = tape.gradient(loss_value, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables),
-                                global_step=tf.compat.v1.train.get_or_create_global_step())
-
-    return loss_history
+#def do_train_f1_loss(model, dataset_batches):
+#    optimizer = AdamOptimizer()
+#
+#    loss_history = []
+#
+#    for (batch, (invec, labels, weights)) in enumerate(dataset_batches.take(1000)):
+#
+#        with tf.GradientTape() as tape:
+#            logits = model(invec, training=True)
+#
+#            original_loss_value = sparse_softmax_cross_entropy(labels, logits, weights=weights)
+#
+#            micro, macro, weighted, f1 = tf_f1_score(
+#                    one_hot(labels, convert=True),
+#                    one_hot(np.argmax(logits, axis=1), convert=False),
+#
+#                    )
+#            loss_value = macro
+#
+#
+#        loss_history.append(loss_value.numpy())
+#        grads = tape.gradient(loss_value, model.trainable_variables)
+#        optimizer.apply_gradients(zip(grads, model.trainable_variables),
+#                                global_step=tf.compat.v1.train.get_or_create_global_step())
+#
+#    return loss_history
 
 def one_hot(vec, convert=False):
     foo = {0: [1, 0, 0, 0],
@@ -351,7 +406,7 @@ def scale_this_thing(x, scaler):
 
 
 
-def get_partitions(vec, slice_size):
+def get_partitions(vec, slice_size, keep_remainder=True):
     assert slice_size > 0
     #assert isinstance(vec, list)
     num_slices = int(math.floor(len(vec)/slice_size))
@@ -360,10 +415,44 @@ def get_partitions(vec, slice_size):
     assert size_remainder >= 0
     #print('size_remainder, ', size_remainder)
     slices = [vec[k*slice_size:k*slice_size+slice_size] for k in range(num_slices)]
-    if size_remainder:
+    if size_remainder and keep_remainder:
         slices.append(vec[-(size_remainder):])
 
     return slices
+
+
+def make_overlapping_partitions(vec, slice_size, overlap, keep_remainder=True):
+    #
+    # NOTE , this case still weird, mu.make_overlapping_partitions(list(range(30)), 10, 9)
+    #
+    assert slice_size > 0 and overlap >= 0 and slice_size > overlap
+
+    num_slices = int(math.floor(len(vec)/(slice_size - overlap)))
+
+    indices = [
+            [k*(slice_size - overlap), k*(slice_size - overlap) + slice_size]
+            for k in range(num_slices)]
+
+    if keep_remainder:
+        if indices[-1][1] < len(vec):
+            indices.append([indices[-1][1] - overlap,
+                            len(vec) + 1])
+    else:
+        if indices[-1][1] > len(vec) - 1:
+            indices.pop(-1)
+
+    slices = [
+            vec[a: b]
+            for (a, b) in indices]
+
+    return indices, slices
+
+#        # no remainder..
+#    #size_remainder = len(vec) - num_slices*(slice_size - overlap)
+#    #assert size_remainder >= 0
+#    if size_remainder and keep_remainder:
+
+#        slices.append(vec[-(size_remainder + overlap):])
 
 
 # Earlier data utils...
@@ -425,22 +514,41 @@ def make_data(df, crews={'training': [1],
     print('Start building training set', quickts())
     traindf = df[df.crew.isin(crews['training'])][what_cols].copy()
     #scalar_dict, _ = do_standard_scaling(traindf, feature_cols)
-    train_datasets = get_windows_h5(traindf,
+    _ = get_windows_h5(traindf,
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
-                                    save_location=f'{save_dir}/train.h5')
+                                    save_location=f'{save_dir}/train.h5',
+                                    overlap=False,
+                                    _type='train')
 
     # Testing
     print('Start building testing set', quickts())
     testdf = df[df.crew.isin(crews['test'])][what_cols].copy()
     #_, _ = do_standard_scaling(testdf, feature_cols, scalar_dict)
-    test_datasets = get_windows_h5(testdf,
+    _ = get_windows_h5(testdf,
                                     cols=feature_cols + ['event'],
                                     window_size=window_size,
                                     row_batch_size=row_batch_size,
-                                    save_location=f'{save_dir}/test.h5')
-    return
+                                    save_location=f'{save_dir}/test.h5',
+                                    overlap=False,
+                                    _type='train')
+
+
+def make_test_data(df, 
+                   window_size=256,
+                   row_batch_size=None,
+                   feature_cols=None,
+                   save_dir=None):
+    # Given unlabeled data, make it into sequenced data for prediction.
+    # keep_index; and option for overlap.
+    _ = get_windows_h5(df,
+                       cols=['id'] + feature_cols, # + ['event'],
+                       window_size=window_size,
+                       row_batch_size=row_batch_size,
+                       save_location=f'{save_dir}/finaltest.h5',
+                       overlap=window_size,
+                       _type='test')
 
 '''
     outdata = {
@@ -517,59 +625,99 @@ def get_windows(df, cols, window_size, percent_of_data=100):
     return np.concatenate(X), np.concatenate(Y)
 
 
-def get_windows_h5(df, cols, window_size, row_batch_size, save_location):
+def get_windows_h5(df, cols, window_size, row_batch_size, save_location,
+                    overlap=False,
+                    _type=None):
     # for every <row_batch_size> rows, save to disk, to <save_location>.
-    parts = get_partitions(range(df.shape[0]), row_batch_size)
+    if overlap:
+        indices, parts = make_overlapping_partitions(range(df.shape[0]),
+                                              row_batch_size,
+                                              overlap=window_size)
+    else:
+        parts = get_partitions(range(df.shape[0]), row_batch_size)
+
     datasets = []
     for i, part in enumerate(parts):
-        X, Y = _inner_get_windows(df.iloc[part], cols, window_size)
+        IX, X, Y = _inner_get_windows(df.iloc[part], cols, window_size,
+                                     _type=_type)
         # Save to disk...
         with h5py.File(save_location, "a") as f:
-            X_name, Y_name = f'dataset_{i}_X', f'dataset_{i}_Y'
-            datasets.append({'X_name': X_name, 'Y_name': Y_name})
+            IX_name, X_name, Y_name = (f'dataset_{i}_IX',
+                                        f'dataset_{i}_X',
+                                        f'dataset_{i}_Y') 
+            f.create_dataset(IX_name, data=np.array(IX, dtype=float))
             f.create_dataset(X_name, data=np.array(X, dtype=float))
-            f.create_dataset(Y_name,
-                            data=np.array(
-                                reshape_y(encode_class(Y), 4),
-                                dtype=float))
+
+            if _type == 'train':
+                f.create_dataset(Y_name,
+                                data=np.array(
+                                    reshape_y(encode_class(Y), 4),
+                                    dtype=float))
+                datasets.append({'IX_name': IX_name,
+                                'X_name': X_name,
+                                'Y_name': Y_name,})
+            elif _type == 'test':
+                datasets.append({'IX_name': IX_name,
+                                'X_name': X_name, })
+
     return datasets
 
 
-def _inner_get_windows(df, cols, window_size):
+def _inner_get_windows(df, cols, window_size, _type):
+    IX = []
     X = []
     Y = []
-    choices = (df.crew.unique().tolist(), [0, 1], ['CA', 'DA', 'SS'])
+    choices = (df.crew.unique().tolist(),
+            df.seat.unique().tolist(),
+            #['CA', 'DA', 'SS', 'LOFT']
+            df.experiment.unique().tolist(),
+            )
     for crew, seat, experiment in itertools.product(*choices):
-        query = (df.crew == crew)&(df.seat == seat)&(df.experiment == experiment)
+        query = ((df.crew == crew)
+                & (df.seat == seat)
+                & (df.experiment == experiment))
         thisdf = df[query][cols]
         if thisdf.empty:
             continue
 
-        X_i, Y_i = to_sequences(thisdf.values, window_size,
-                                incols=range(len(cols) - 1),
-                                outcol=-1)
+        (IX_i, X_i, Y_i) = to_sequences(thisdf.values, seq_size=window_size,
+                                # First col index...
+                                incols=range(1, len(cols)),
+                                outcol=(-1 if _type == 'train' else None),
+                                indexcol=0)
+        IX.append(IX_i)
         X.append(X_i)
         Y.append(Y_i)
 
-    return np.concatenate(X), np.concatenate(Y)
+    return np.concatenate(IX), np.concatenate(X), np.concatenate(Y)
 
 
 # Borrowing parts of this func from
 # https://github.com/jeffheaton/t81_558_deep_learning/blob/master/t81_558_class10_lstm.ipynb
-def to_sequences(obs, seq_size, incols, outcol):
+def to_sequences(obs, seq_size, incols, outcol=None, indexcol=None):
+    # Given an input sequence, produce additional windowed sequences, 
+    # Treat the last element of a sequence as both the "Label" and "Index" 
+    #       of that sequence.
+    ix = []
     x = []
     y = []
 
-    for i in range(len(obs)-seq_size):
+    for i in range(len(obs) - seq_size + 1):
         window = obs[i:(i+seq_size)][:, incols]
-        after_window = obs[i+seq_size - 1, outcol]
-
         x.append(window)
-        y.append(after_window)
 
+        if outcol is not None:
+            after_window = obs[i+seq_size - 1, outcol]
+            y.append(after_window)
+        if indexcol is not None:
+            index = obs[i+seq_size - 1, indexcol]
+            ix.append(index)
+
+    ixarr = np.array(ix)
     xarr = np.array(x)
     yarr = np.array(y)
-    return (xarr,
+    return (ixarr,
+            xarr,
             yarr)
 
 
@@ -621,17 +769,36 @@ def read_h5(source_location, Xdataset, Ydataset):
     return X, Ylabels
 
 def read_h5_two(source_location, Xdataset, Ydataset):
-    with h5py.File(source_location, 'r+') as fd:
-        X = fd[Xdataset].__array__()
-        Y = fd[Ydataset].__array__()
-        #Ylabels = np.argmax(Y, axis=1)
-        #counters_index[i] = dict(Counter(labels))
+    while True:
+        try:
+            with h5py.File(source_location, 'r+') as fd:
+                X = fd[Xdataset].__array__()
+                Y = fd[Ydataset].__array__()
+                #Ylabels = np.argmax(Y, axis=1)
+                #counters_index[i] = dict(Counter(labels))
+            break
+        except OSError as e:
+            print('sleeping')
+            if 'Resource temporarily unavailable' in repr(e):
+                time.sleep(1)
+            else:
+                raise
     return X, Y
         
 
 def read_h5_raw(source_location, name):
-    with h5py.File(source_location, 'r+') as fd:
-        return fd[name].__array__()
+    while True:
+        try:
+            with h5py.File(source_location, 'r+') as fd:
+                return fd[name].__array__()
+            break
+        except OSError as e:
+            print('sleeping')
+            if 'Resource temporarily unavailable' in repr(e):
+                time.sleep(1)
+            else:
+                raise
+
 
 
 def h5_keys(loc):
@@ -698,8 +865,9 @@ def get_performance(model, dataloc, dataset_names):
         X, Ylabels = read_h5_two(dataloc, Xdataset, Ydataset) 
     
         preds = model(X.astype('float32'))
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=Ylabels.astype('int64'),
+        loss = sparse_softmax_cross_entropy(labels=Ylabels.astype('int64'),
                                                logits=preds.numpy()).numpy()
+
 
         lossvec.append(loss)
     return lossvec
@@ -725,4 +893,68 @@ def count_data_in_location(loc, datasets):
                    for k in [0, 1, 2, 3]}
     total_label_sums = {k: sum(total_counts[k]) for k in [0, 1, 2, 3]}
     return total_label_sums
+
+
+
+
+def build_scaler_from_h5(loc, datasets, feature):
+    # one label at a time here..
+    scaler = MinMaxScaler()
+    params_vec = []
+    for name in tqdm(datasets):
+        X = read_h5_raw(loc, name)
+        fullsize = X.shape[0]*X.shape[1]
+        scaler.partial_fit(
+            np.reshape(X[:, :, feature].ravel(),
+                       (fullsize, 1)))
+        params_vec.append(
+            [scaler.data_min_[0], scaler.data_max_[0]])
+
+    return scaler, params_vec
+
+def build_many_scalers_from_h5(loc, datasets, scaler=None):
+    # one label at a time here..
+    if scaler is None:
+        scaler = MinMaxScaler()
+    params_vec = []
+    for name in tqdm(datasets):
+        X = read_h5_raw(loc, name)
+        fullsize = X.shape[0]*X.shape[1]
+        scaler.partial_fit(
+            np.reshape(X,
+                       (fullsize, X.shape[2])))
+        params_vec.append(
+            [scaler.data_min_, scaler.data_max_])
+
+    return scaler, params_vec
+
+def apply_scalers(loc, datasets, scaler, outloc):
+    # for each dataset, read. then write '_scaled'
+    for name in datasets:
+        X = read_h5_raw(loc, name)
+        original_shape = X.shape
+        fullsize = X.shape[0]*X.shape[1]
+         
+        Xss = np.reshape(scaler.transform(
+            np.reshape(X,
+                       (fullsize, X.shape[2]))),
+                         original_shape)
+
+        save_that(outloc, f'{name}_scaled',
+                     Xss)
+
+
+def to_json_local(data, loc):
+    with open(loc, 'w') as fd:
+        json.dump(data, fd, cls=JSONCustomEncoder)
+
+
+class JSONCustomEncoder(json.JSONEncoder):
+    def default(self, object):
+        if isinstance(object, np.float32):
+            return float(object)
+        else:
+            # call base class implementation which takes care of
+            # raising exceptions for unsupported types
+            return json.JSONEncoder.default(self, object)
 
