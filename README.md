@@ -3,6 +3,7 @@ A look at this physiological data kaggle from [earlier this year](https://www.ka
 
 ### Notes
 - [My High Level Recap](#my-high-level-recap)
+- [Low Level Recap](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-04-05-organzing-thoughts.md)
 - [_Initial look_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md)
 - [_Test driving TensorFlow with the fashion hello world_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-13--keras-hello-world-fashion.ipynb)
 - [_Wrangling time data_](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-14-wrangling-time-data.md)
@@ -39,6 +40,8 @@ I also have memories of starting modeling experiments before going on runs and b
 At one point I was at the Boston Amtrak terminal waiting for my bus, getting deeper into why it is handy to look at raw *logit* data coming out of a model, especially in a multiclass problem because it can show how strongly a model classifies each class. But applying the logistic function or a *softmax* is of course good for sussing out probabilities. But then I realized I was waiting for a bus at an Amtrak terminal and I had to sprint several blocks to actually catch my bus!
 
 At the end of the day I think of all of the amazing things I could one day do with this kind of technology, such as classifying music or building a chat bot (maybe even one that can tell jokes).
+
+Also: [my Low Level Recap](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-04-05-organzing-thoughts.md)
 
 
 ### Pocket glossary
