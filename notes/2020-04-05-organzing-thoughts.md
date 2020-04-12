@@ -7,7 +7,7 @@ In the process of visualizing data, at one point I had accidentally been combini
 
 Above, extracting a plot from my [2019-11-03 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-11-03-different-data-approach.md#plot-some-data), is an example of where I plot combined multi seat data by accident. At one point this was weirding me out. But I realized finally that I had been combining the data of multiple people.
 
-For diagram above (^^) , I had written a quick function `produce_plots_for_col` for plotting four features simultaneously, given a pandas datagrame, some features and an interval, 
+For diagram above (^^) , I had written a quick function `produce_plots_for_col` for plotting four features simultaneously, given a pandas datagrame, some features and an interval, but indeed the _zig zag_ plot was a bit baffling for a bit.
 
 ```python
 mp.produce_plots_for_col(
