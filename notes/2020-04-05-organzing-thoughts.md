@@ -5,8 +5,19 @@ _Here, below, I write a bit retrospectively about my notes, trying to summarize 
 from my various notebook entries._
 
 #### Table of Contents
-* [Quick intro to the data](#as-a-quick-intro-to-the-data)
-* [Trickiness of the how the data is laid out]()
+* [Quick intro to the data](#quick-intro-to-the-data)
+* [Trickiness of the how the data is laid out (crews and seats?!)](#trickiness-of-the-how-the-data-is-laid-out-crews-and-seats)
+* [Some more visual inspection](#some-more-visual-inspection)
+* [Building datasets](#building-datasets)
+* [Scaling](#scaling)
+* [Shuffling and adjusting dropout](#shuffling-and-adjusting-dropout)
+* [More epochs?](#more-epochs)
+* [Weight initialization](#weight-initialization)
+* [Class balance](#class-balance)
+* [Active Learning: changing the training approach](#active-learning-changing-the-training-approach)
+* [Full training set error](#full-training-set-error)
+* [Shuffling train/test](#shuffling-traintest)
+* [Reconsider that high dropout](#reconsider-that-high-dropout)
 
 #### Quick intro to the data
 The physiological data includes several  types _(including respiration, electrocardiograms (ecg heart data), galvanic skin response (gsr), electroencephalography (eeg brain brain data))_ across multiple `"crews"` . A crew includes two `"seats"` (`0` and `1`). We are provided with `256 measurements per second` across three experiments (Channelized Attention (CA) , Diverted Attention (DA) and Startle/Surprise (SS) ). Across the three experiments, four target "states" (or classes) are labeled for all of the rows in the data.
