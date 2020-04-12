@@ -82,8 +82,10 @@ def do_predict(kwargs):
 
     # Save this ...
     workdir = kwargs['work_dir']
-    mu.to_json_local({'steploss': steplosses},
-                  f'{workdir}/{mu.quickts()}.json')
+
+    if kwargs['labeled']:
+        mu.to_json_local({'steploss': steplosses},
+                      f'{workdir}/{mu.quickts()}.json')
 
     print('Done.')
 
@@ -143,20 +145,23 @@ def eager_predict(kwargs):
             parallel=kwargs['parallel'],
             workdir=workdir)
 
-    combine_preds(workdir)
+    combine_preds(workdir,
+            suffix=raw_test_loc.split('/')[-1].split('.')[0])
     final_delete(workdir)
+
+    print(f'Finished working on {raw_test_loc}')
 
     return steplosses
 
 
-def combine_preds(workdir):
+def combine_preds(workdir, suffix=None):
     files = [f'{workdir}/{x}' for x in os.listdir(workdir)
             if x.startswith('preds')] 
 
     predsdf = pd.concat([pd.read_csv(x, index_col=None)
                         for x in files])
     predsdf.id = predsdf.id.map(lambda x: int(x))
-    predsdf.to_csv(f'{workdir}/{mu.quickts()}-crewseat-preds.csv',
+    predsdf.to_csv(f'{workdir}/{mu.quickts()}-crewseat-preds-{suffix}.csv',
                     index=False)
 
     [os.remove(x) for x in files]
