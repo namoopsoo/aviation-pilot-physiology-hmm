@@ -105,7 +105,11 @@ start = 3400; produce_plots_for_col(df, ['r', 'ecg', 'gsr', 'eeg_fp1'],
 When I look back at my notebook I wrote about how I was very _dumbfounded_ when I realized I combined them by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . And indeed being careful with splitting this was key in creating good datasets.
 
 #### Some more visual inspection 
-* [in my 2019-06-08 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-08-visually-inspect-generated-sequences.md)
+* [in my 2019-06-08 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-08-visually-inspect-generated-sequences.md#and-plot) I used another nice quick visual inspection technique, looking at some time series data samples at the four classes, 
+
+
+<img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/assets/Screen%20Shot%202019-06-15%20at%2011.29.22%20AM.png"
+width="607" height="383">
 
 #### Building datasets
 * I spent a lot of time next building data sets, [here](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-23-today.md) , [and](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-06-today.md)  , and building basic quick and dirty LSTM tensor flow models. [And also](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-13-Five-more-data.md) .
