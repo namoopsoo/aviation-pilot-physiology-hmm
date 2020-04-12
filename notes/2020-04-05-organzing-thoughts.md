@@ -1,7 +1,12 @@
-Here I write a bit retrospectively about my notes, trying to summarize some of the journey.
+
+#### Summary
+_Here, below, I write a bit retrospectively about my notes, trying to summarize some of the journey. I try to give some high lights
+from my various notebook entries._
 
 #### As a quick intro to the data
-There are four classes of events in the training data, `'A', 'B', 'C', 'D'` , corresponding to four labels of physiological state, namely
+The physiological data includes several  types _(including respiration, electrocardiograms (ecg heart data), galvanic skin response (gsr), electroencephalography (eeg brain brain data))_ across multiple `"crews"` . A crew includes two `"seats"` (`0` and `1`). We are provided with `256 measurements per second` across three experiments (Channelized Attention (CA) , Diverted Attention (DA) and Startle/Surprise (SS) ). Across the three experiments, four target "states" (or classes) are labeled for all of the rows in the data.
+
+The four classes of events in the training data, `'A', 'B', 'C', 'D'` , correspond to three target physiological states of the three experiments, plus a neutral baseline state:
 
 |label|description|
 |--|--|
@@ -10,14 +15,13 @@ There are four classes of events in the training data, `'A', 'B', 'C', 'D'` , co
 |C|Channelized Attention|
 |D|Diverted Attention|
 
-In my early [notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md) I took a quick look at the proportion of experiment time had been spent in the different states, 
+In my early [notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md) I took a quick look at the proportion of experiment time had been spent in the different states. Per the below, looking at each person separately, I saw that for the first person as an example, (`crew=1, seat=0`) , `~98%` of `CA` was labeled as "Channelized Attention" and `2%` as baseline. But for the other two experiments, the target states appear to be much more brief, with only `13%` of the "DA" and `9%` of the "SS" experiments.
 
 _(copying an output from that notebook...)_
 
 ```
 statsdf = gpdf.groupby(by=['crew', 'seat']).apply(extract_proportions).reset_index()
-
-In [78]: statsdf                                                                                                                                     
+In [78]: statsdf                                                                                                                         
 Out[78]: 
     crew  seat      A/CA      A/DA      A/SS      C/CA      D/DA      B/SS
 0      1     0  0.018593  0.868871  0.903015  0.981407  0.131129  0.096985
@@ -54,7 +58,20 @@ start = 3400; produce_plots_for_col(df, ['r', 'ecg', 'gsr', 'eeg_fp1'],
                                 range(start,start+150))
 ```
 
-When I look back at my notebook I wrote about how I was very _dumbfounded_ when I realized I combined them by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . ... 
+When I look back at my notebook I wrote about how I was very _dumbfounded_ when I realized I combined them by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . And indeed being careful with splitting this was key in creating good datasets.
+
+#### Some more visual inspection 
+* [in my 2019-06-08 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-08-visually-inspect-generated-sequences.md)
+
+#### Building datasets
+* I spent a lot of time next building data sets, [here](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-06-23-today.md) , [and](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-06-today.md)  , and building basic quick and dirty LSTM tensor flow models. [And also](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-13-Five-more-data.md) .
+
+I also tried different approaches for understanding the models I was building. Including looking at raw logits, as per the below graphic, from my [2019-07-13-Four notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-13-Four.md#look-at-them-logits). I thought this was a cool method compared to a confusion matrix for instance is  because it shows the raw logits of each of the four classes, before the argmax voting observed in a confusion matrix is done. 
+
+![png](2019-07-13-Four_files/2019-07-13-Four_6_0.png)
+
+
+
 
 ### Scaling
 I took a deeper [histogram](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md) look at my data, seeing quite a lot of [ups and downs](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md#another-time-series-look). 
