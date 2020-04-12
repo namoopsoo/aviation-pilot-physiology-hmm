@@ -20,6 +20,8 @@ Since this data is super huge (especially when sequencifying it), I wonder if it
 to try learning in chunks. As far as I understand, multiple calls to `fit` in keras are perfectly fine and tensorflow style weight updates are done in a for loop anyway. I just need to improve the data feeding logistics..
 
 
+#### Plot some data
+
 ```python
 from importlib import reload
 import os
