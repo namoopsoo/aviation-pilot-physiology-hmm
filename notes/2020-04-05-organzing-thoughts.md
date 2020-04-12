@@ -19,6 +19,7 @@ from my various notebook entries._
 * [Full training set error](#full-training-set-error)
 * [Shuffling train/test](#shuffling-traintest)
 * [Reconsider that high dropout](#reconsider-that-high-dropout)
+* [Prediction Speedup](#prediction-speedup)
 
 #### Quick intro to the data
 The physiological data includes several  types _(including respiration, electrocardiograms (ecg heart data), galvanic skin response (gsr), electroencephalography (eeg brain brain data))_ across multiple `"crews"` . A crew includes two `"seats"` (`0` and `1`). We are provided with `256 measurements per second` across three experiments (Channelized Attention (CA) , Diverted Attention (DA) and Startle/Surprise (SS) ). Across the three experiments, four target "states" (or classes) are labeled for all of the rows in the data.
@@ -222,7 +223,14 @@ https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/202
 
 
 
+#### Prediction Speedup
+At this point I had improved my validation results enough that I wanted to submit my predictions. But as I described in my [notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-02-29-time.md) , the `17.9 million test examples` would take potentially `25 hours` per my back of the envelope calculation.
 
+But luckily I discovered that just playing with my prediction batch size, changing it from `32` to `1024`, I found I could cut my time from ` 56k examples/292 seconds` to `56k examples/27s` , taking the back of the envelope calculation from `25 hours` to `2.5 hours` !..
+
+I also ended up utilizing `awk` to actually build batches for predict, avoiding trying to squeeze everything into memory. 
+
+And for one final optimization, I added multi-processing with `joblib` , to take advantage of all of my available cores. 
 
 
 
