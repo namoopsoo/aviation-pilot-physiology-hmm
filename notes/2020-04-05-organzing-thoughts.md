@@ -1,5 +1,21 @@
 Here I write a bit retrospectively about my notes, trying to summarize some of the journey.
 
+#### Trickiness of the how the data is laid out (crews and seats?!)
+In the process of visualizing data, at one point I had accidentally been combining the data of multiple people.
+
+![png](2019-11-03-different-data-approach_files/2019-11-03-different-data-approach_3_0.png)
+
+Above, extracting a plot from my [2019-11-03 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-11-03-different-data-approach.md#plot-some-data), is an example of where I plot combined multi seat data by accident. At one point this was weirding me out. But I realized finally that I had been combining the data of multiple people.
+
+For diagram above (^^) , I had written a quick function `produce_plots_for_col` for plotting four features simultaneously, given a pandas datagrame, some features and an interval, 
+
+```python
+mp.produce_plots_for_col(
+    crew1df, ['r', 'ecg', 'gsr', 'eeg_fp1',], range(50, 200))
+```
+
+Indeed I had done this several times actually by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . ...
+
 ### Scaling
 I took a deeper [histogram](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md) look at my data, seeing quite a lot of [ups and downs](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md#another-time-series-look). 
 
