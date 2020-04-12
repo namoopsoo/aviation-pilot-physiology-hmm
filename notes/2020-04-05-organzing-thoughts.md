@@ -1,20 +1,60 @@
 Here I write a bit retrospectively about my notes, trying to summarize some of the journey.
 
+#### As a quick intro to the data
+There are four classes of events in the training data, `'A', 'B', 'C', 'D'` , corresponding to four labels of physiological state, namely
+
+|label|description|
+|--|--|
+|A | Baseline |
+|B |Startle/Surprise|
+|C|Channelized Attention|
+|D|Diverted Attention|
+
+In my early [notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-10-initial-look.md) I took a quick look at the proportion of experiment time had been spent in the different states, 
+
+_(copying an output from that notebook...)_
+
+```
+statsdf = gpdf.groupby(by=['crew', 'seat']).apply(extract_proportions).reset_index()
+
+In [78]: statsdf                                                                                                                                     
+Out[78]: 
+    crew  seat      A/CA      A/DA      A/SS      C/CA      D/DA      B/SS
+0      1     0  0.018593  0.868871  0.903015  0.981407  0.131129  0.096985
+1      1     1  0.018803  0.879030  0.902685  0.981197  0.120970  0.097315
+2      2     0  0.001954  0.857941  0.916630  0.998046  0.142059  0.083370
+3      2     1  0.001781  0.848619  0.916605  0.998219  0.151381  0.083395
+4      3     0  0.001248  0.854135  0.916782  0.998752  0.145865  0.083218
+5      3     1  0.000597  0.860974  0.916772  0.999403  0.139026  0.083228
+6      4     0  0.001302  0.868853  0.916514  0.998698  0.131147  0.083486
+7      4     1  0.001400  0.860968  0.916706  0.998600  0.139032  0.083294
+8      5     0  0.001661  0.847193  0.916730  0.998339  0.152807  0.083270
+9      5     1  0.001791  0.857766  0.916472  0.998209  0.142234  0.083528
+10     6     0  0.002311  0.860514  0.916711  0.997689  0.139486  0.083289
+11     6     1  0.001661  0.858872  0.916748  0.998339  0.141128  0.083252
+12     7     0  0.001563  0.867075  0.916536  0.998437  0.132925  0.083464
+13     7     1  0.001607  0.855907  0.916471  0.998393  0.144093  0.083529
+14     8     0  0.000999  0.856505  0.915394  0.999001  0.143495  0.084606
+15     8     1  0.001053  0.853877  0.915412  0.998947  0.146123  0.084588
+16    13     0  0.001801  0.841341  0.916482  0.998199  0.158659  0.083518
+17    13     1  0.001628  0.847312  0.916595  0.998372  0.152688  0.083405
+```
+
 #### Trickiness of the how the data is laid out (crews and seats?!)
-In the process of visualizing data, at one point I had accidentally been combining the data of multiple people.
+In the process of visualizing data, I had been using matplot lib to visualize the four different classes of events, `'A', 'B', 'C', 'D'` as red, green, blue and cyan. That way I could potentially try to get an intuition around the visual cues around state transitions. But at one point I had accidentally been combining the data of multiple people.
 
-![png](2019-11-03-different-data-approach_files/2019-11-03-different-data-approach_3_0.png)
+![png](2019-10-26_files/2019-10-26_14_0.png)
 
-Above, extracting a plot from my [2019-11-03 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-11-03-different-data-approach.md#plot-some-data), is an example of where I plot combined multi seat data by accident. At one point this was weirding me out. But I realized finally that I had been combining the data of multiple people.
+Above, extracting a plot from my [2019-10-26 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-10-26.md), is an example of where I plot combined multi seat data by accident. At one point this was weirding me out. But I realized finally that I had been combining the data of multiple people.
 
 For diagram above (^^) , I had written a quick function `produce_plots_for_col` for plotting four features simultaneously, given a pandas datagrame, some features and an interval, but indeed the _zig zag_ plot was a bit baffling for a bit.
 
 ```python
-mp.produce_plots_for_col(
-    crew1df, ['r', 'ecg', 'gsr', 'eeg_fp1',], range(50, 200))
+start = 3400; produce_plots_for_col(df, ['r', 'ecg', 'gsr', 'eeg_fp1'],
+                                range(start,start+150))
 ```
 
-Indeed I had done this several times actually by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . ...
+When I look back at my notebook I wrote about how I was very _dumbfounded_ when I realized I combined them by accident. The data is complicated however. It includes four indexing columns: `id` , `time` , `crew` and `seat` . ... 
 
 ### Scaling
 I took a deeper [histogram](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md) look at my data, seeing quite a lot of [ups and downs](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-12-14--annotated.md#another-time-series-look). 
