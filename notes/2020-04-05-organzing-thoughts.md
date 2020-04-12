@@ -232,6 +232,7 @@ I also ended up utilizing `awk` to actually build batches for predict, avoiding 
 
 And for one final optimization, I added multi-processing with `joblib` , to take advantage of all of my available cores. 
 
+The steps get more detailed in [this notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2020-03-07-run-test-set-snapshot6.md).
 
 
 
