@@ -6,6 +6,7 @@ from my various notebook entries._
 
 #### Table of Contents
 * [Quick intro to the data](#quick-intro-to-the-data)
+* [The data is weirdly partially sorted](#the-data-is-weirdly-partially-sorted)
 * [Trickiness of the how the data is laid out (crews and seats?!)](#trickiness-of-the-how-the-data-is-laid-out-crews-and-seats)
 * [Some more visual inspection](#some-more-visual-inspection)
 * [Building datasets](#building-datasets)
@@ -59,6 +60,33 @@ Out[78]:
 16    13     0  0.001801  0.841341  0.916482  0.998199  0.158659  0.083518
 17    13     1  0.001628  0.847312  0.916595  0.998372  0.152688  0.083405
 ```
+
+#### The data is weirdly partially sorted
+As I mention in [this notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-05-14-wrangling-time-data.md), when indexing on what I believe are the main uniqueness constraint columns (`crew`, `seat`, `experiment`), the `time` is not sorted. There are strange jumps, such as this one which I borrow from my notebook .. I show the first three rows (`0, 1, 2`) and also where I see the jump starting from around `6600`, where row `6606` goes back in time. 
+
+```python
+pd.concat([
+        df[['crew', 'seat', 'time', 'r', 'experiment', 'event']].iloc[:3],
+        df[['crew', 'seat', 'time', 'r', 'experiment', 'event']].iloc[6600:6610]])
+```
+```python
+	crew	seat	time	r	experiment	event
+0	1	1	0.011719	817.705994	CA	A
+1	1	1	0.015625	817.705994	CA	A
+2	1	1	0.019531	817.705994	CA	A
+6600	1	1	109.988281	817.437988	CA	C
+6601	1	0	109.988281	664.265991	CA	C
+6602	1	0	109.992188	664.265991	CA	C
+6603	1	1	109.992188	817.442017	CA	C
+6604	1	1	109.996094	817.442017	CA	C
+6605	1	0	109.996094	664.265991	CA	C
+6606	1	0	11.000000	664.331970	CA	C
+6607	1	1	11.000000	817.898987	CA	C
+6608	1	0	11.003906	664.331970	CA	C
+6609	1	1	11.003906	817.898987	CA	C
+```
+I sort this data myself, but it is confusing for sure. 
+
 
 #### Trickiness of the how the data is laid out (crews and seats?!)
 In the process of visualizing data, I had been using matplot lib to visualize the four different classes of events, `'A', 'B', 'C', 'D'` as red, green, blue and cyan. That way I could potentially try to get an intuition around the visual cues around state transitions. But at one point I had accidentally been combining the data of multiple people.
