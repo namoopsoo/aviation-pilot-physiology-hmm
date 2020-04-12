@@ -1,9 +1,14 @@
+## Low Level Recap
 
 #### Summary
 _Here, below, I write a bit retrospectively about my notes, trying to summarize some of the journey. I try to give some high lights
 from my various notebook entries._
 
-#### As a quick intro to the data
+#### Table of Contents
+* [Quick intro to the data](#as-a-quick-intro-to-the-data)
+* [Trickiness of the how the data is laid out]()
+
+#### Quick intro to the data
 The physiological data includes several  types _(including respiration, electrocardiograms (ecg heart data), galvanic skin response (gsr), electroencephalography (eeg brain brain data))_ across multiple `"crews"` . A crew includes two `"seats"` (`0` and `1`). We are provided with `256 measurements per second` across three experiments (Channelized Attention (CA) , Diverted Attention (DA) and Startle/Surprise (SS) ). Across the three experiments, four target "states" (or classes) are labeled for all of the rows in the data.
 
 The four classes of events in the training data, `'A', 'B', 'C', 'D'` , correspond to three target physiological states of the three experiments, plus a neutral baseline state:
