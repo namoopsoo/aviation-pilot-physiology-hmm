@@ -96,7 +96,6 @@ I sort this data myself, but it is confusing for sure.
 #### Trickiness of the how the data is laid out (crews and seats?!)
 In the process of visualizing data, I had been using matplot lib to visualize the four different classes of events, `'A', 'B', 'C', 'D'` as red, green, blue and cyan. That way I could potentially try to get an intuition around the visual cues around state transitions. But at one point I had accidentally been combining the data of multiple people.
 
-![png](2019-10-26_files/2019-10-26_14_0.png)
 <img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-10-26_files/2019-10-26_14_0.png"/>
 
 Above, extracting a plot from my [2019-10-26 notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-10-26.md), is an example of where I plot combined multi seat data by accident. At one point this was weirding me out. But I realized finally that I had been combining the data of multiple people.
@@ -122,9 +121,9 @@ width="607" height="383">
 
 I also tried different approaches for understanding the models I was building. Including looking at raw logits, as per the below graphic, from my [2019-07-13-Four notebook](https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-13-Four.md#look-at-them-logits). I thought this was a cool method compared to a confusion matrix for instance is  because it shows the raw logits of each of the four classes, before the argmax voting observed in a confusion matrix is done. 
 
-![png](2019-07-13-Four_files/2019-07-13-Four_6_0.png)
+xxx
 <img src="https://github.com/namoopsoo/aviation-pilot-physiology-hmm/blob/master/notes/2019-07-13-Four_files/2019-07-13-Four_6_0.png"/>
-
+xxx
 
 
 
